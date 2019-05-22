@@ -339,6 +339,7 @@ QObject* PX4FirmwarePlugin::loadParameterMetaData(const QString& metaDataFile)
 
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
 {
+/* *
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_DO_REPOSITION,
                             true,   // show error if failed
@@ -349,6 +350,8 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
                             NAN,
                             NAN,
                             NAN);
+/* */
+	vehicle->sendPause();
 }
 
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
@@ -409,6 +412,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
     qDebug() << takeoffAltRel << takeoffAltRelFromVehicle << takeoffAltAMSL << vehicleAltitudeAMSL;
 
     connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
+/* *
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_NAV_TAKEOFF,
                             true,                           // show error is fails
@@ -416,6 +420,12 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
                             0, 0,                           // param 2-4 unused
                             NAN, NAN, NAN,                  // No yaw, lat, lon
                             takeoffAltAMSL);                // AMSL altitude
+/* */
+	vehicle->sendCommandNavTakeoff( -1,                            // pitch (none requested)
+									NAN,                           // yaw (none requested)
+									NAN,                           // latitude (none requested)
+									NAN,                           // longitude (none requested)
+									takeoffAltAMSL);               // altitude
 }
 
 void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
@@ -426,17 +436,17 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
     }
 
     if (vehicle->capabilityBits() && MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
-        vehicle->sendMavCommandInt(vehicle->defaultComponentId(),
-                                   MAV_CMD_DO_REPOSITION,
-                                   MAV_FRAME_GLOBAL,
-                                   true,   // show error is fails
-                                   -1.0f,
-                                   MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                                   0.0f,
-                                   NAN,
-                                   gotoCoord.latitude(),
-                                   gotoCoord.longitude(),
-                                   vehicle->altitudeAMSL()->rawValue().toFloat());
+        vehicle->sendMavCommandInt( vehicle->defaultComponentId(),
+									MAV_CMD_DO_REPOSITION,
+									MAV_FRAME_GLOBAL,
+									true,   // show error is fails
+									-1.0f,
+									MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
+									0.0f,
+									NAN,
+									gotoCoord.latitude(),
+									gotoCoord.longitude(),
+									vehicle->altitudeAMSL()->rawValue().toFloat());
     } else {
         vehicle->sendMavCommand(vehicle->defaultComponentId(),
                                 MAV_CMD_DO_REPOSITION,

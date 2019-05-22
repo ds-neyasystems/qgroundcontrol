@@ -135,7 +135,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	add_compile_options(
 		-Wall
 		-Wextra
-		-Werror
+#		-Werror
 
 		-Wno-address-of-packed-member # ignore for mavlink
 	)
@@ -149,7 +149,7 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	add_compile_options(
 		-Wall
 		-Wextra
-		-Werror
+#		-Werror
 	)
 	
 elseif (WIN32)

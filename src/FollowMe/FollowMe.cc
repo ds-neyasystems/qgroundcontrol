@@ -12,7 +12,7 @@
 
 #include "MultiVehicleManager.h"
 #include "FirmwarePlugin.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "FollowMe.h"
 #include "Vehicle.h"
 #include "PositionManager.h"
@@ -161,6 +161,7 @@ void FollowMe::_sendGCSMotionReport()
     }
 
     QmlObjectListModel & vehicles    = *_toolbox->multiVehicleManager()->vehicles();
+/* *
     MAVLinkProtocol* mavlinkProtocol = _toolbox->mavlinkProtocol();
     mavlink_follow_target_t follow_target;
     memset(&follow_target, 0, sizeof(follow_target));
@@ -174,10 +175,17 @@ void FollowMe::_sendGCSMotionReport()
     follow_target.lon = _motionReport.lon_int;
     follow_target.vel[0] = _motionReport.vx;
     follow_target.vel[1] = _motionReport.vy;
-
+/* */
+	float velocity[3] = { _motionReport.vx, _motionReport.vy };
+	float acceleration[3] = {0};
+	float attitude_q[4] = {0};
+	float rates[3] = {0};
+	float position_cov[3] = { _motionReport.pos_std_dev[0], _motionReport.pos_std_dev[1] };
+	
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
         if(_currentMode || vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
+/* *
             mavlink_message_t message;
             mavlink_msg_follow_target_encode_chan(mavlinkProtocol->getSystemId(),
                                                   mavlinkProtocol->getComponentId(),
@@ -185,6 +193,8 @@ void FollowMe::_sendGCSMotionReport()
                                                   &message,
                                                   &follow_target);
             vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+/* */
+			vehicle->sendFollowTarget( _motionReport.lat_int, _motionReport.lon_int, _motionReport.alt, velocity, acceleration, attitude_q, rates, position_cov, estimatation_capabilities );
         }
     }
 }

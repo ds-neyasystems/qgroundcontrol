@@ -18,7 +18,7 @@
 #include <QJsonObject>
 
 #include "FactSystem.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "AutoPilotPlugin.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
@@ -119,7 +119,7 @@ signals:
     
 protected:
     Vehicle*            _vehicle;
-    MAVLinkProtocol*    _mavlink;
+//    MAVLinkProtocol*    _mavlink;
     
     void _parameterUpdate(int vehicleId, int componentId, QString parameterName, int parameterCount, int parameterId, int mavType, QVariant value);
     void _valueUpdated(const QVariant& value);

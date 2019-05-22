@@ -19,6 +19,7 @@
 #include "QGCFileDownload.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "MAVLinkCommInterface.h"
 
 #include <QTcpSocket>
 
@@ -280,13 +281,17 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
                                         &paramValue);
 }
 
-void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
+void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, CommInterface* outgoingLink, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
 
     mavlink_param_set_t     paramSet;
     mavlink_param_union_t   paramUnion;
 
+	MAVLinkCommInterface* interface = qobject_cast<MAVLinkCommInterface*>(outgoingLink);
+	if( !interface )
+		return;
+	
     memset(&paramSet, 0, sizeof(paramSet));
 
     // APM stack passes all parameter values in mavlink_param_union_t.param_float no matter what
@@ -322,7 +327,7 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
         qCCritical(APMFirmwarePluginLog) << "Invalid/Unsupported data type used in parameter:" << paramSet.param_type;
     }
 
-    mavlink_msg_param_set_encode_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message, &paramSet);
+    mavlink_msg_param_set_encode_chan(message->sysid, message->compid, interface->mavlinkChannel(), message, &paramSet);
 }
 
 bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message)
@@ -480,7 +485,7 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
     return true;
 }
 
-void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
+void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, CommInterface* outgoingLink, mavlink_message_t* message)
 {
     //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
     if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
@@ -871,7 +876,7 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
     }
 
     setGuidedMode(vehicle, true);
-
+/* *
     mavlink_message_t msg;
     mavlink_set_position_target_local_ned_t cmd;
 
@@ -894,6 +899,18 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+/* */
+	float position[3] = {0.0f, 0.0f, static_cast<float>(-(altitudeChange))};
+	float velocity[3] = {0};
+	float acceleration[3] = {0};	
+	vehicle->sendSetPositionTargetLocalNED( position,
+											velocity,
+											acceleration,
+											0.0f,
+											0.0f,
+											0xFFF8, //type mask - only xyz are valid
+											MAV_FRAME_LOCAL_OFFSET_NED );
+	
 }
 
 void APMFirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
@@ -945,13 +962,19 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
         qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
         return false;
     }
-
+/* *
     vehicle->sendMavCommand(vehicle->defaultComponentId(),
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
                             static_cast<float>(takeoffAltRel));                     // Relative altitude
-
+/* */
+	vehicle->sendCommandNavTakeoff( 0.0f,                               // minimum pitch
+									0.0f,                               // yaw angle
+									0.0f,                               // latitude
+									0.0f,                               // longitude
+									static_cast<float>(takeoffAltRel)); // relative altitude
+	
     return true;
 }
 
@@ -984,7 +1007,10 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
             return;
         }
     } else {
-        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
+/* */
+//        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true //show error);
+/* */
+		vehicle->sendCommandMissionStart( );
     }
 }
 
@@ -1013,11 +1039,14 @@ QString APMFirmwarePlugin::_versionRegex() {
 void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* message)
 {
     mavlink_rc_channels_t channels;
+	uint8_t mavlink_channel;
+	MAVLinkCommInterface* interface;
     mavlink_msg_rc_channels_decode(message, &channels);
     //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
     if(channels.rssi) {
         channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
     }
+/*	
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_rc_channels_encode_chan(
         static_cast<uint8_t>(mavlink->getSystemId()),
@@ -1025,21 +1054,42 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* m
         vehicle->priorityLink()->mavlinkChannel(),
         message,
         &channels);
+*/
+	interface = dynamic_cast<MAVLinkCommInterface*>(vehicle->priorityLink());
+	mavlink_channel = interface->mavlinkChannel();
+	mavlink_msg_rc_channels_encode_chan(
+		MAVLinkProtocol::getInstance()->getSystemId(),
+        MAVLinkProtocol::getInstance()->getComponentId(),
+		mavlink_channel,
+        message,
+        &channels);
 }
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
 {
     mavlink_rc_channels_raw_t channels;
+	uint8_t mavlink_channel;
+	MAVLinkCommInterface* interface;
     mavlink_msg_rc_channels_raw_decode(message, &channels);
     //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
     if(channels.rssi) {
         channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
     }
+	/*
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_rc_channels_raw_encode_chan(
         static_cast<uint8_t>(mavlink->getSystemId()),
         static_cast<uint8_t>(mavlink->getComponentId()),
         vehicle->priorityLink()->mavlinkChannel(),
+        message,
+        &channels);
+	*/
+	interface = dynamic_cast<MAVLinkCommInterface*>(vehicle->priorityLink());
+	mavlink_channel = interface->mavlinkChannel();
+	mavlink_msg_rc_channels_raw_encode_chan(
+        MAVLinkProtocol::getInstance()->getSystemId(),
+        MAVLinkProtocol::getInstance()->getComponentId(),
+        mavlink_channel,
         message,
         &channels);
 }

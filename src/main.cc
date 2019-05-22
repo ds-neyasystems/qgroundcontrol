@@ -26,7 +26,7 @@
 #include <QStringListModel>
 #include "QGCApplication.h"
 #include "AppMessages.h"
-
+#include <QSerialPort>
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
     #include "RunGuard.h"
@@ -148,6 +148,11 @@ int main(int argc, char *argv[])
     }
 #endif
 
+	qRegisterMetaType<uint8_t>("uint8_t");
+	qRegisterMetaType<uint16_t>("uint16_t");
+	qRegisterMetaType<uint32_t>("uint32_t");
+	qRegisterMetaType<uint64_t>("uint64_t");
+	
     // The following calls to qRegisterMetaType are done to silence debug output which warns
     // that we use these types in signals, and without calling qRegisterMetaType we can't queue
     // these signals. In general we don't queue these signals, but we do what the warning says

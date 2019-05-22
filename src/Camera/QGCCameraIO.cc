@@ -37,7 +37,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
     connect(&_paramWriteTimer,   &QTimer::timeout, this, &QGCCameraParamIO::_paramWriteTimeout);
     connect(_fact, &Fact::rawValueChanged, this, &QGCCameraParamIO::_factChanged);
     connect(_fact, &Fact::_containerRawValueChanged, this, &QGCCameraParamIO::_containerRawValueChanged);
-    _pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
+//    _pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
     //-- TODO: Even though we don't use anything larger than 32-bit, this should
     //   probably be updated.
     switch (_fact->type()) {
@@ -181,6 +181,7 @@ QGCCameraParamIO::_sendParameter()
             union_value.param_int32 = (int32_t)_fact->rawValue().toInt();
             break;
     }
+/* *
     memcpy(&p.param_value[0], &union_value.bytes[0], MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
     p.target_system = (uint8_t)_vehicle->id();
     p.target_component = (uint8_t)_control->compID();
@@ -192,6 +193,8 @@ QGCCameraParamIO::_sendParameter()
         &msg,
         &p);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+	_vehicle->sendParameterExtSet( _fact->name().toStdString().c_str(), union_value.bytes, union_value.type );
     _paramWriteTimer.start();
 }
 
@@ -351,6 +354,7 @@ QGCCameraParamIO::paramRequest(bool reset)
         _forceUIUpdate  = true;
     }
     qCDebug(CameraIOLog) << "Request parameter:" << _fact->name();
+/* *	
     char param_id[MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN + 1];
     memset(param_id, 0, sizeof(param_id));
     strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
@@ -365,5 +369,7 @@ QGCCameraParamIO::paramRequest(bool reset)
         param_id,
         -1);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+	_vehicle->sendParameterExtRequestRead( _fact->name().toStdString().c_str() );
     _paramRequestTimer.start();
 }

@@ -1,6 +1,6 @@
 #include "QGCUnconnectedInfoWidget.h"
-#include "LinkInterface.h"
-#include "LinkManager.h"
+//#include "LinkInterface.h"
+//#include "LinkManager.h"
 #include "MainWindow.h"
 #include "ui_QGCUnconnectedInfoWidget.h"
 

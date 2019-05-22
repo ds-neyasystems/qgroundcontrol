@@ -71,7 +71,7 @@ private:
     bool                _done;
     bool                _updateOnSet;
     MAV_PARAM_EXT_TYPE  _mavParamType;
-    MAVLinkProtocol*    _pMavlink;
+//    MAVLinkProtocol*    _pMavlink;
     bool                _forceUIUpdate;
 };
 

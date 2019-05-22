@@ -73,7 +73,7 @@ public:
     ///     @param link Link to test against
     ///     @param skipVehicle Don't consider this Vehicle as part of the test
     /// @return true: link is in use by one or more Vehicles
-    bool linkInUse(LinkInterface* link, Vehicle* skipVehicle);
+    bool linkInUse(CommInterface* link, Vehicle* skipVehicle);
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -88,15 +88,18 @@ signals:
 
     void _deleteVehiclePhase2Signal(void);
 
+public slots:
+    void vehicleHeartbeatInfo(CommInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
+	
 private slots:
     void _deleteVehiclePhase1(Vehicle* vehicle);
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
     void _vehicleParametersReadyChanged(bool parametersReady);
     void _sendGCSHeartbeat(void);
-    void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
     void _requestProtocolVersion(unsigned version);
-
+//	void _newInterface(CommInterface* interface);
+	
 private:
     bool _vehicleExists(int vehicleId);
 
@@ -114,7 +117,7 @@ private:
 
     FirmwarePluginManager*      _firmwarePluginManager;
     JoystickManager*            _joystickManager;
-    MAVLinkProtocol*            _mavlinkProtocol;
+//    MAVLinkProtocol*            _mavlinkProtocol;
 
     QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats
     bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission

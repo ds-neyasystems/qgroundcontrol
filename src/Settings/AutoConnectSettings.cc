@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "AutoConnectSettings.h"
-#include "LinkManager.h"
+//#include "LinkManager.h"
 
 #include <QQmlEngine>
 #include <QtQml>

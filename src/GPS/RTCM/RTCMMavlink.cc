@@ -30,8 +30,8 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
         printf("RTCM bandwidth: %.2f kB/s\n", (float) _bandwidthByteCounter / elapsed * 1000.f / 1024.f);
         _bandwidthTimer.restart();
         _bandwidthByteCounter = 0;
-    }
-
+    }	
+/* *
     const int maxMessageLength = MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN;
     mavlink_gps_rtcm_data_t mavlinkRtcmData;
     memset(&mavlinkRtcmData, 0, sizeof(mavlink_gps_rtcm_data_t));
@@ -58,8 +58,15 @@ void RTCMMavlink::RTCMDataUpdate(QByteArray message)
         }
     }
     ++_sequenceId;
+/* */
+	QmlObjectListModel& vehicles = *_toolbox.multiVehicleManager()->vehicles();
+	for (int i = 0; i < vehicles.count(); i++) {
+		Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
+		vehicle->sendGPSRTCM( message, _sequenceId );
+	}
+	++_sequenceId;
 }
-
+/*
 void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
 {
     QmlObjectListModel& vehicles = *_toolbox.multiVehicleManager()->vehicles();
@@ -75,3 +82,4 @@ void RTCMMavlink::sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg)
         vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
     }
 }
+*/

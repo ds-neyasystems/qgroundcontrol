@@ -14,7 +14,7 @@
 #include <QElapsedTimer>
 
 #include "QGCToolbox.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 
 /**
  ** class RTCMMavlink
@@ -31,7 +31,7 @@ public slots:
     void RTCMDataUpdate(QByteArray message);
 
 private:
-    void sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg);
+//    void sendMessageToVehicle(const mavlink_gps_rtcm_data_t& msg);
 
     QGCToolbox& _toolbox;
     QElapsedTimer _bandwidthTimer;

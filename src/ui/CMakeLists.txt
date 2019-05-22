@@ -2,24 +2,24 @@
 add_library(ui
 
 	HILDockWidget.cc
-	linechart/ChartPlot.cc
-	linechart/IncrementalPlot.cc
-	linechart/LinechartPlot.cc
-	linechart/Linecharts.cc
-	linechart/LinechartWidget.cc
-	linechart/Scrollbar.cc
-	linechart/ScrollZoomer.cc
+#	linechart/ChartPlot.cc
+#	linechart/IncrementalPlot.cc
+#	linechart/LinechartPlot.cc
+#	linechart/Linecharts.cc
+#	linechart/LinechartWidget.cc
+#	linechart/Scrollbar.cc
+#	linechart/ScrollZoomer.cc
 
 	MainWindow.cc
-	MAVLinkDecoder.cc
+#	MAVLinkDecoder.cc
 	MultiVehicleDockWidget.cc
 	QGCHilConfiguration.cc
 	QGCHilFlightGearConfiguration.cc
 	QGCHilJSBSimConfiguration.cc
 	QGCHilXPlaneConfiguration.cc
 	QGCMapRCToParamDialog.cpp
-	QGCMAVLinkInspector.cc
-	QGCMAVLinkLogPlayer.cc
+#	QGCMAVLinkInspector.cc
+#	QGCMAVLinkLogPlayer.cc
 	QGCPluginHost.cc
 	QGCUASFileView.cc
 	QGCUASFileViewMulti.cc
@@ -39,8 +39,8 @@ add_library(ui
 	QGCHilJSBSimConfiguration.ui
 	QGCHilXPlaneConfiguration.ui
 	QGCMapRCToParamDialog.ui
-	QGCMAVLinkInspector.ui
-	QGCMAVLinkLogPlayer.ui
+#	QGCMAVLinkInspector.ui
+#	QGCMAVLinkLogPlayer.ui
 	QGCPluginHost.ui
 	QGCUASFileView.ui
 	QGCUASFileViewMulti.ui
@@ -59,8 +59,8 @@ target_link_libraries(ui
 target_include_directories(ui
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}
-                ${CMAKE_CURRENT_BINARY_DIR}
-	PRIVATE
-		linechart
+               ${CMAKE_CURRENT_BINARY_DIR}
+#	PRIVATE
+#		linechart
 	)
 

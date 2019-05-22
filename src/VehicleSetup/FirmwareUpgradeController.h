@@ -15,7 +15,7 @@
 #define FirmwareUpgradeController_H
 
 #include "PX4FirmwareUpgradeThread.h"
-#include "LinkManager.h"
+//#include "LinkManager.h"
 #include "FirmwareImage.h"
 
 #include <QObject>

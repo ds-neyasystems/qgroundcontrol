@@ -112,6 +112,7 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
 
     // Send maximum sized chunks until the complete buffer is transmitted
     while(data.size()) {
+/*		
         QByteArray chunk{data.left(MAVLINK_MSG_SERIAL_CONTROL_FIELD_DATA_LEN)};
         uint8_t flags = SERIAL_CONTROL_FLAG_EXCLUSIVE |  SERIAL_CONTROL_FLAG_RESPOND | SERIAL_CONTROL_FLAG_MULTI;
         if (close) flags = 0;
@@ -131,6 +132,7 @@ MavlinkConsoleController::_sendSerialData(QByteArray data, bool close)
                     reinterpret_cast<uint8_t*>(chunk.data()));
         _vehicle->sendMessageOnLink(priority_link, msg);
         data.remove(0, chunk.size());
+*/
     }
 }
 

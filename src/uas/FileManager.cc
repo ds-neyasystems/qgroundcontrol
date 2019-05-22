@@ -10,7 +10,8 @@
 
 #include "FileManager.h"
 #include "QGC.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
+#include "MAVLinkCommInterface.h"
 #include "MainWindow.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
@@ -25,7 +26,7 @@ FileManager::FileManager(QObject* parent, Vehicle* vehicle)
     : QObject(parent)
     , _currentOperation(kCOIdle)
     , _vehicle(vehicle)
-    , _dedicatedLink(NULL)
+//    , _dedicatedLink(NULL)
     , _activeSession(0)
     , _missingDownloadedBytes(0)
     , _downloadingMissingParts(false)
@@ -521,13 +522,13 @@ void FileManager::listDirectory(const QString& dirPath)
         _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
         return;
     }
-
+/*
     _dedicatedLink = _vehicle->priorityLink();
     if (!_dedicatedLink) {
         _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
     }
-
+*/
     // initialise the lister
     _listPath = dirPath;
     _listOffset = 0;
@@ -565,13 +566,13 @@ void FileManager::downloadPath(const QString& from, const QDir& downloadDir)
         _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
         return;
     }
-
+/*
     _dedicatedLink = _vehicle->priorityLink();
     if (!_dedicatedLink) {
         _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
     }
-    
+*/    
 	qCDebug(FileManagerLog) << "downloadPath from:" << from << "to:" << downloadDir;
 	_downloadWorker(from, downloadDir, true /* read file */);
 }
@@ -582,13 +583,13 @@ void FileManager::streamPath(const QString& from, const QDir& downloadDir)
         _emitErrorMessage(tr("Command not sent. Waiting for previous command to complete."));
         return;
     }
-
+/*
     _dedicatedLink = _vehicle->priorityLink();
     if (!_dedicatedLink) {
         _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
     }
-    
+*/    
 	qCDebug(FileManagerLog) << "streamPath from:" << from << "to:" << downloadDir;
 	_downloadWorker(from, downloadDir, false /* stream file */);
 }
@@ -632,13 +633,13 @@ void FileManager::uploadPath(const QString& toPath, const QFileInfo& uploadFile)
         _emitErrorMessage(tr("UAS File manager busy. Try again later"));
         return;
     }
-
+/*
     _dedicatedLink = _vehicle->priorityLink();
     if (!_dedicatedLink) {
         _emitErrorMessage(tr("Command not sent. No Vehicle links."));
         return;
     }
-
+*/
     if (toPath.isEmpty()) {
         return;
     }
@@ -865,7 +866,8 @@ void FileManager::_sendRequest(Request* request)
     qCDebug(FileManagerLog) << "_sendRequest opcode:" << request->hdr.opcode << "seqNumber:" << request->hdr.seqNumber;
     
     if (_systemIdQGC == 0) {
-        _systemIdQGC = qgcApp()->toolbox()->mavlinkProtocol()->getSystemId();
+//        _systemIdQGC = qgcApp()->toolbox()->mavlinkProtocol()->getSystemId();
+		MAVLinkProtocol::getInstance()->getSystemId();
     }
     _sendRequestNoAck(request);
 }
@@ -873,6 +875,7 @@ void FileManager::_sendRequest(Request* request)
 /// @brief Sends the specified Request out to the UAS, without ack timeout handling
 void FileManager::_sendRequestNoAck(Request* request)
 {
+	/*
     mavlink_message_t message;
 
     // Unit testing code can end up here without _dedicateLink set since it tests inidividual commands.
@@ -893,4 +896,6 @@ void FileManager::_sendRequestNoAck(Request* request)
                                                  (uint8_t*)request); // Payload
     
     _vehicle->sendMessageOnLink(link, message);
+	*/
+	_vehicle->sendFileTransfer( QByteArray( (char*)request, 251 ) );
 }

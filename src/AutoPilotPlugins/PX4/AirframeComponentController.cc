@@ -16,6 +16,7 @@
 #include "QGCMAVLink.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
+#include "CommManager.h"
 
 #include <QVariant>
 #include <QQmlProperty>
@@ -118,15 +119,24 @@ void AirframeComponentController::_waitParamWriteSignal(QVariant value)
 }
 
 void AirframeComponentController::_rebootAfterStackUnwind(void)
-{    
-    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 1.0f);
+{
+/* */	
+//    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 1.0f);
+/* */	
+	_vehicle->sendPreflightRebootShutdown( _vehicle->defaultComponentId(), //component id
+										   1.0f,                           //reboot autopilot
+										   0.0f,                           //do nothing to onboard computer
+										   0.0f,                           //do nothing to camera
+										   0.0f,                           //do nothing to mount
+										   0.0f );                         //camera id - doesn't matter since we're doing nothing to cameras
     qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     for (unsigned i = 0; i < 2000; i++) {
         QGC::SLEEP::usleep(500);
         qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     qgcApp()->restoreOverrideCursor();
-    qgcApp()->toolbox()->linkManager()->disconnectAll();
+//    qgcApp()->toolbox()->linkManager()->disconnectAll();
+	CommManager::getCommManager()->disconnectAll();
 }
 
 AirframeType::AirframeType(const QString& name, const QString& imageResource, QObject* parent) :

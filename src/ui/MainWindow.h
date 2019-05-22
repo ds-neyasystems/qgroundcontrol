@@ -27,13 +27,13 @@
 #include <QSettings>
 #include <QList>
 
-#include "LinkManager.h"
-#include "LinkInterface.h"
+//#include "LinkManager.h"
+//#include "LinkInterface.h"
 #include "UASInterface.h"
 #include "LogCompressor.h"
-#include "QGCMAVLinkInspector.h"
-#include "QGCMAVLinkLogPlayer.h"
-#include "MAVLinkDecoder.h"
+//#include "QGCMAVLinkInspector.h"
+//#include "QGCMAVLinkLogPlayer.h"
+//#include "MAVLinkDecoder.h"
 #include "Vehicle.h"
 #include "QGCDockWidget.h"
 #include "QGCQmlWidgetHolder.h"
@@ -98,17 +98,17 @@ protected slots:
 signals:
     void initStatusChanged(const QString& message, int alignment, const QColor &color);
     /** Emitted when any value changes from any source */
-    void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
+//    void valueChanged(const int uasId, const QString& name, const QString& unit, const QVariant& value, const quint64 msec);
     void reallyClose(void);
 
     // Used for unit tests to know when the main window closes
     void mainWindowClosed(void);
 
 public:
-    QGCMAVLinkLogPlayer* getLogPlayer()
-    {
-        return logPlayer;
-    }
+//    QGCMAVLinkLogPlayer* getLogPlayer()
+//    {
+//        return logPlayer;
+//    }
 
 protected:
     void connectCommonActions();
@@ -118,7 +118,7 @@ protected:
 
     QSettings settings;
 
-    QGCMAVLinkLogPlayer* logPlayer;
+//    QGCMAVLinkLogPlayer* logPlayer;
 #ifdef QGC_MOUSE_ENABLED_WIN
     /** @brief 3d Mouse support (WIN only) */
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
@@ -140,7 +140,7 @@ protected:
 
 private slots:
     void _closeWindow(void) { close(); }
-    void _vehicleAdded(Vehicle* vehicle);
+//    void _vehicleAdded(Vehicle* vehicle);
     void _showDockWidgetAction(bool show);
     void _showAdvancedUIChanged(bool advanced);
 
@@ -165,9 +165,9 @@ private:
     void _showDockWidget(const QString &name, bool show);
     void _loadVisibleWidgetsSettings(void);
     void _storeVisibleWidgetsSettings(void);
-    MAVLinkDecoder* _mavLinkDecoderInstance(void);
+//    MAVLinkDecoder* _mavLinkDecoderInstance(void);
 
-    MAVLinkDecoder*         _mavlinkDecoder;
+//    MAVLinkDecoder*         _mavlinkDecoder;
     bool                    _lowPowerMode;           ///< If enabled, QGC reduces the update rates of all widgets
     bool                    _showStatusBar;
     QVBoxLayout*            _centralLayout;

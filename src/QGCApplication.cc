@@ -38,8 +38,10 @@
 #include "QGCApplication.h"
 #include "AudioOutput.h"
 #include "CmdLineOptParser.h"
-#include "UDPLink.h"
-#include "LinkManager.h"
+//#include "UDPLink.h"
+//#include "LinkManager.h"
+#include "CommManager.h"
+#include "CommInterface.h"
 #include "UASMessageHandler.h"
 #include "QGCTemporaryFile.h"
 #include "QGCPalette.h"
@@ -92,7 +94,7 @@
 #include "FirmwareImage.h"
 
 #ifndef NO_SERIAL_LINK
-#include "SerialLink.h"
+//#include "SerialLink.h"
 #endif
 
 #ifndef __mobile__
@@ -358,6 +360,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
+	CommManager::getCommManager()->initialize();
 
 #ifndef __mobile__
     _gpsRtkFactGroup = new GPSRTKFactGroup(this);
@@ -414,7 +417,8 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<ParameterManager>    (kQGCVehicle,                           1, 0, "ParameterManager",           kRefOnly);
     qmlRegisterUncreatableType<QGCCameraManager>    (kQGCVehicle,                           1, 0, "QGCCameraManager",           kRefOnly);
     qmlRegisterUncreatableType<QGCCameraControl>    (kQGCVehicle,                           1, 0, "QGCCameraControl",           kRefOnly);
-    qmlRegisterUncreatableType<LinkInterface>       (kQGCVehicle,                           1, 0, "LinkInterface",              kRefOnly);
+//    qmlRegisterUncreatableType<LinkInterface>       (kQGCVehicle,                           1, 0, "LinkInterface",              kRefOnly);
+	qmlRegisterUncreatableType<CommInterface>       (kQGCVehicle,                           1, 0, "LinkInterface",              kRefOnly);
     qmlRegisterUncreatableType<MissionController>   (kQGCControllers,                       1, 0, "MissionController",          kRefOnly);
     qmlRegisterUncreatableType<GeoFenceController>  (kQGCControllers,                       1, 0, "GeoFenceController",         kRefOnly);
     qmlRegisterUncreatableType<RallyPointController>(kQGCControllers,                       1, 0, "RallyPointController",       kRefOnly);
@@ -483,11 +487,13 @@ bool QGCApplication::_initForNormalAppBoot(void)
 #endif
 
     // Now that main window is up check for lost log files
-    connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+//    connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
+	connect(this, &QGCApplication::checkForLostLogFiles, MAVLinkProtocol::getInstance(), &MAVLinkProtocol::checkForLostLogFiles);
     emit checkForLostLogFiles();
 
     // Load known link configurations
-    toolbox()->linkManager()->loadLinkConfigurationList();
+//    toolbox()->linkManager()->loadLinkConfigurationList();
+	CommManager::getCommManager()->loadCommConfigurationList();
 
     // Probe for joysticks
     toolbox()->joystickManager()->init();
@@ -498,7 +504,8 @@ bool QGCApplication::_initForNormalAppBoot(void)
     }
 
     // Connect links with flag AutoconnectLink
-    toolbox()->linkManager()->startAutoConnectedLinks();
+//    toolbox()->linkManager()->startAutoConnectedLinks();
+	CommManager::getCommManager()->startAutoConnectedLinks();
 
     if (getQGCMapEngine()->wasCacheReset()) {
         showMessage(tr("The Offline Map Cache database has been upgraded. "

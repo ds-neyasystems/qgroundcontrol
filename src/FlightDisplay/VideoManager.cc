@@ -262,12 +262,17 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
         //-- Video Stream Discovery
         connect(_activeVehicle, &Vehicle::mavlinkMessageReceived, this, &VideoManager::_vehicleMessageReceived);
         qCDebug(VideoManagerLog) << "Requesting video stream info";
+/* *				
         _activeVehicle->sendMavCommand(
             MAV_COMP_ID_ALL,                                      // Target component
             MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,             // Command id
             false,                                                // ShowError
             1,                                                    // First camera only
             1);                                                   // Request video stream information
+/* */
+		_activeVehicle->sendRequestVideoStreamInformation( MAV_COMP_ID_ALL, //target component
+														   1,               //stream id - first camera
+														   1 );             //request video stream
     }
 }
 
@@ -309,12 +314,17 @@ VideoManager::stepZoom(int direction)
         _lastZoomChange.start();
         qCDebug(VideoManagerLog) << "Step Stream Zoom" << direction;
         if(_activeVehicle && hasZoom()) {
+/* *			
             _activeVehicle->sendMavCommand(
                 _videoStreamCompID,                     // Target component
                 MAV_CMD_SET_CAMERA_ZOOM,                // Command id
                 false,                                  // ShowError
                 ZOOM_TYPE_STEP,                         // Zoom type
                 direction);                             // Direction (-1 wide, 1 tele)
+/* */
+			_activeVehicle->sendSetCameraZoom( _videoStreamCompID, //target component
+											   ZOOM_TYPE_STEP,     //zoom type
+											   direction );        //direction (-1 wide, 1 tele)
         }
     }
 }
@@ -341,18 +351,24 @@ VideoManager::setCurrentStream(int stream)
     if(_hasAutoStream && stream <= _streamInfo.count && stream > 0 && _activeVehicle) {
         if(_currentStream != stream) {
             //-- Stop current stream
+/* *
             _activeVehicle->sendMavCommand(
                 _videoStreamCompID,                     // Target component
                 MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
                 false,                                  // ShowError
                 _currentStream);                        // Stream ID
+/* */
+			_activeVehicle->sendVideoStopStreaming( _videoStreamCompID, _currentStream );
             //-- Start new stream
             _currentStream = stream;
+/* *			
             _activeVehicle->sendMavCommand(
                 _videoStreamCompID,                     // Target component
                 MAV_CMD_VIDEO_START_STREAMING,          // Command id
                 false,                                  // ShowError
                 _currentStream);                        // Stream ID
+/* */
+			_activeVehicle->sendVideoStartStreaming( _videoStreamCompID, _currentStream );
             _currentStream = stream;
             emit currentStreamChanged();
         }

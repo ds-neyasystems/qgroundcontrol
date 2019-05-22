@@ -13,6 +13,8 @@
 
 #include "QGroundControlQmlGlobal.h"
 
+#include "MAVLinkCommInterface.h"
+
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
@@ -54,7 +56,7 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
-    _linkManager            = toolbox->linkManager();
+//    _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
     _mapEngineManager       = toolbox->mapEngineManager();
     _qgcPositionManager     = toolbox->qgcPositionManager();
@@ -146,6 +148,7 @@ void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText)
 
 void QGroundControlQmlGlobal::stopOneMockLink(void)
 {
+/*	
 #ifdef QT_DEBUG
     LinkManager* linkManager = qgcApp()->toolbox()->linkManager();
 
@@ -159,17 +162,20 @@ void QGroundControlQmlGlobal::stopOneMockLink(void)
         }
     }
 #endif
+*/
 }
 
 void QGroundControlQmlGlobal::setIsVersionCheckEnabled(bool enable)
 {
-    qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);
+//    qgcApp()->toolbox()->mavlinkProtocol()->enableVersionCheck(enable);
+	MAVLinkProtocol::getInstance()->enableVersionCheck(enable);
     emit isVersionCheckEnabledChanged(enable);
 }
 
 void QGroundControlQmlGlobal::setMavlinkSystemID(int id)
 {
-    qgcApp()->toolbox()->mavlinkProtocol()->setSystemId(id);
+//    qgcApp()->toolbox()->mavlinkProtocol()->setSystemId(id);
+	MAVLinkProtocol::getInstance()->setSystemId(id);
     emit mavlinkSystemIDChanged(id);
 }
 

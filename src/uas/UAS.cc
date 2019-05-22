@@ -24,15 +24,15 @@
 #include <cstdlib>
 
 #include "UAS.h"
-#include "LinkInterface.h"
+//#include "LinkInterface.h"
 #include "QGC.h"
 #include "AudioOutput.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
-#include "LinkManager.h"
-#ifndef NO_SERIAL_LINK
-#include "SerialLink.h"
-#endif
+//#include "LinkManager.h"
+//#ifndef NO_SERIAL_LINK
+//#include "SerialLink.h"
+//#endif
 #include "FirmwarePluginManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -42,12 +42,12 @@
 QGC_LOGGING_CATEGORY(UASLog, "UASLog")
 
 // THIS CLASS IS DEPRECATED. ALL NEW FUNCTIONALITY SHOULD GO INTO Vehicle class
-UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager) : UASInterface(),
+UAS::UAS(Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager) : UASInterface(),
     lipoFull(4.2f),
     lipoEmpty(3.5f),
     uasId(vehicle->id()),
     unknownPackets(),
-    mavlink(protocol),
+//    mavlink(protocol),
     receiveDropRate(0),
     sendDropRate(0),
 
@@ -128,7 +128,7 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 {
 
 #ifndef __mobile__
-    connect(_vehicle, &Vehicle::mavlinkMessageReceived, &fileManager, &FileManager::receiveMessage);
+//    connect(_vehicle, &Vehicle::mavlinkMessageReceived, &fileManager, &FileManager::receiveMessage);
 #endif
 
 }
@@ -386,7 +386,7 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
     if (!_vehicle) {
         return;
     }
-
+/* *
     int gyroCal = 0;
     int magCal = 0;
     int airspeedCal = 0;
@@ -450,6 +450,8 @@ void UAS::startCalibration(UASInterface::StartCalibrationType calType)
                                        airspeedCal,                      // PX4: airspeed cal, ArduPilot: compass mot
                                        escCal);                          // esc cal
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+//	_vehicle->sendStartCalibration(calType);
 }
 
 void UAS::stopCalibration(void)
@@ -457,7 +459,7 @@ void UAS::stopCalibration(void)
     if (!_vehicle) {
         return;
     }
-
+/* *
     _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
                              MAV_CMD_PREFLIGHT_CALIBRATION,     // command id
                              true,                              // showError
@@ -468,6 +470,8 @@ void UAS::stopCalibration(void)
                              0,                                 // accel cal
                              0,                                 // airspeed cal
                              0);                                // unused
+/* */	
+	_vehicle->sendStopCalibration();
 }
 
 void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
@@ -475,7 +479,7 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
     if (!_vehicle) {
         return;
     }
-
+/* *
    int actuatorCal = 0;
 
     switch (calType) {
@@ -491,6 +495,8 @@ void UAS::startBusConfig(UASInterface::StartBusConfigType calType)
                              MAV_CMD_PREFLIGHT_UAVCAN,          // command id
                              true,                              // showError
                              actuatorCal);                      // actuators
+/* */
+//	_vehicle->sendStartBusConfig(calType);
 }
 
 void UAS::stopBusConfig(void)
@@ -498,11 +504,13 @@ void UAS::stopBusConfig(void)
     if (!_vehicle) {
         return;
     }
-
+/* *
     _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
                              MAV_CMD_PREFLIGHT_UAVCAN,          // command id
                              true,                              // showError
                              0);                                // cancel
+/* */
+	_vehicle->sendStopBusConfig();
 }
 
 /**
@@ -750,6 +758,7 @@ void UAS::requestImage()
     // check if there is already an image transmission going on
     if (imagePacketsArrived == 0)
     {
+/* *
         mavlink_message_t msg;
         mavlink_msg_data_transmission_handshake_pack_chan(mavlink->getSystemId(),
                                                           mavlink->getComponentId(),
@@ -758,6 +767,8 @@ void UAS::requestImage()
                                                           MAVLINK_DATA_STREAM_IMG_JPEG,
                                                           0, 0, 0, 0, 0, 50);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+		_vehicle->sendDataTransmissionHandshake( MAVLINK_DATA_STREAM_IMG_JPEG, 0, 0, 0, 0, 0, 50 );
     }
 }
 
@@ -891,6 +902,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
             // send an external attitude setpoint command (rate control disabled)
             float attitudeQuaternion[4];
             mavlink_euler_to_quaternion(roll, pitch, yaw, attitudeQuaternion);
+/* *
             uint8_t typeMask = 0x7; // disable rate control
             mavlink_msg_set_attitude_target_pack_chan(mavlink->getSystemId(),
                                                       mavlink->getComponentId(),
@@ -905,8 +917,19 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                       0,
                                                       0,
                                                       thrust);
+/* */
+			_vehicle->sendSetAttitudeTarget( this->uasId,        //target system
+											 0,                  //target_component,
+											 0x7,                //type_mask disable rates
+											 attitudeQuaternion, //attitude quaternion (w, x, y, z)
+											 0,                  //body_roll_rate (disabled by type mask)
+											 0,                  //body_pitch_rate (disabled by type mask)
+											 0,                  //body_yaw_rate (disabled by type mask
+											 thrust);            //thrust
+
         } else if (joystickMode == Vehicle::JoystickModePosition) {
             // Send the the local position setpoint (local pos sp external message)
+/* *			
             static float px = 0;
             static float py = 0;
             static float pz = 0;
@@ -935,8 +958,18 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                                 0,
                                                                 yaw,
                                                                 0);
+/* */
+			uint16_t typeMask = (1<<11)|(7<<6)|(7<<3); // select only POSITION control
+			float acceleration[3] = {0};
+			float velocity[3] = {0};
+			static float position[3] = {0,0,0};			
+			position[0] -= pitch;
+			position[1] += roll;
+			position[2] -= 2.0f * (thrust - 0.5);
+			_vehicle->sendSetPositionTargetLocalNED( position, velocity, acceleration, yaw, 0, typeMask, MAV_FRAME_LOCAL_NED );
         } else if (joystickMode == Vehicle::JoystickModeForce) {
             // Send the the force setpoint (local pos sp external message)
+/* *
             float dcm[3][3];
             mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
             const float fx = -dcm[0][2] * thrust;
@@ -963,8 +996,17 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                                 fz,
                                                                 0,
                                                                 0);
+/* */
+			uint16_t typeMask = (3<<10)|(7<<3)|(7<<0)|(1<<9); // select only FORCE(acceleration) control (disable everything else)
+            float dcm[3][3];
+            mavlink_euler_to_dcm(roll, pitch, yaw, dcm);
+			float position[3] = {0};
+			float velocity[3] = {0};
+			float acceleration[3] = { -dcm[0][2] * thrust, -dcm[1][2] * thrust, -dcm[2][2] * thrust };
+			_vehicle->sendSetPositionTargetLocalNED( position, velocity, acceleration, 0, 0, typeMask, MAV_FRAME_LOCAL_NED );
         } else if (joystickMode == Vehicle::JoystickModeVelocity) {
             // Send the the local velocity setpoint (local pos sp external message)
+/* *		
             static float vx = 0;
             static float vy = 0;
             static float vz = 0;
@@ -995,8 +1037,19 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                                 0,
                                                                 0,
                                                                 yawrate);
+/* */
+			uint16_t typeMask = (1<<10)|(7<<6)|(7<<0); // select only VELOCITY control
+			float position[3] = {0};
+			float acceleration[3] = {0};
+			static float velocity[3] = {0,0,0};
+			static float yawrate = 0;
+			velocity[0] -= pitch;
+			velocity[0] += roll;
+			velocity[0] -= 2.0f * (thrust - 0.5);
+			yawrate += yaw;
+			_vehicle->sendSetPositionTargetLocalNED( position, velocity, acceleration, 0, yawrate, typeMask, MAV_FRAME_LOCAL_NED);
         } else if (joystickMode == Vehicle::JoystickModeRC) {
-
+/* *
             // Save the new manual control inputs
             manualRollAngle = roll;
             manualPitchAngle = pitch;
@@ -1023,9 +1076,18 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                  &message,
                                                  this->uasId,
                                                  newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+/* */
+			const float axesScaling = 1.0 * 1000.0;
+			_vehicle->sendManualControl( this->uasId,
+										 -pitch * axesScaling,
+										 roll * axesScaling,
+										 thrust * axesScaling,
+										 yaw * axesScaling,
+										 buttons );
+	
         }
 
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+//        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
     }
 }
 
@@ -1049,6 +1111,7 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
         // Do not control rates and throttle
         quint8 mask = (1 << 0) | (1 << 1) | (1 << 2); // ignore rates
         mask |= (1 << 6); // ignore throttle
+/* *		
         mavlink_msg_set_attitude_target_pack_chan(mavlink->getSystemId(),
                                                   mavlink->getComponentId(),
                                                   _vehicle->priorityLink()->mavlinkChannel(),
@@ -1056,13 +1119,21 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
                                                   QGC::groundTimeMilliseconds(), this->uasId, _vehicle->defaultComponentId(),
                                                   mask, q, 0, 0, 0, 0);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+/* */		
+		_vehicle->sendSetAttitudeTarget( this->uasId, _vehicle->defaultComponentId(), mask, q, 0, 0, 0, 0);
         quint16 position_mask = (1 << 3) | (1 << 4) | (1 << 5) |
             (1 << 6) | (1 << 7) | (1 << 8);
+/* *
         mavlink_msg_set_position_target_local_ned_pack_chan(mavlink->getSystemId(), mavlink->getComponentId(),
                                                             _vehicle->priorityLink()->mavlinkChannel(),
                                                             &message, QGC::groundTimeMilliseconds(), this->uasId, _vehicle->defaultComponentId(),
                                                             MAV_FRAME_LOCAL_NED, position_mask, x, y, z, 0, 0, 0, 0, 0, 0, yaw, yawrate);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+/* */
+		float position[3] = {x, y, z};
+		float velocity[3] = {0};
+		float acceleration[3] = {0};
+		_vehicle->sendSetPositionTargetLocalNED(position, velocity, acceleration, yaw, yawrate, position_mask, MAV_FRAME_LOCAL_NED);
         qDebug() << __FILE__ << __LINE__ << ": SENT 6DOF CONTROL MESSAGES: x" << x << " y: " << y << " z: " << z << " roll: " << roll << " pitch: " << pitch << " yaw: " << yaw;
     }
     else
@@ -1078,11 +1149,16 @@ void UAS::setManual6DOFControlCommands(double x, double y, double z, double roll
 void UAS::pairRX(int rxType, int rxSubType)
 {
     if (_vehicle) {
+/* *
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(),    // target component
                                  MAV_CMD_START_RX_PAIR,             // command id
                                  true,                              // showError
                                  rxType,
                                  rxSubType);
+/* */		
+		_vehicle->sendCommandStartRXPair( rxType,                         // type
+										  rxSubType );                    // subtype
+
     }
 }
 
@@ -1301,7 +1377,7 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
                 sinPhi_2 * cosTheta_2 * sinPsi_2);
         q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 -
                 sinPhi_2 * sinTheta_2 * cosPsi_2);
-
+/* *
         mavlink_message_t msg;
         mavlink_msg_hil_state_quaternion_pack_chan(mavlink->getSystemId(),
                                                    mavlink->getComponentId(),
@@ -1310,6 +1386,23 @@ void UAS::sendHilState(quint64 time_us, float roll, float pitch, float yaw, floa
                                                    time_us, q, rollspeed, pitchspeed, yawspeed,
                                                    lat*1e7f, lon*1e7f, alt*1000, vx*100, vy*100, vz*100, ind_airspeed*100, true_airspeed*100, xacc*1000/9.81, yacc*1000/9.81, zacc*1000/9.81);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */		
+		_vehicle->sendHILStateQuaternion( q,
+										  rollspeed,
+										  pitchspeed,
+										  yawspeed,
+										  lat*1e7f,
+										  lon*1e7f,
+										  alt*1000,
+										  vx*100,
+										  vy*100,
+										  vz*100,
+										  ind_airspeed*100,
+										  true_airspeed*100,
+										  xacc*1000/9.81,
+										  yacc*1000/9.81,
+										  zacc*1000/9.81 );
+
     }
     else
     {
@@ -1381,7 +1474,7 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
         float diff_pressure_corrupt = addZeroMeanNoise(diff_pressure, diff_pressure_var);
         float pressure_alt_corrupt = addZeroMeanNoise(pressure_alt, pressure_alt_var);
         float temperature_corrupt = addZeroMeanNoise(temperature,temperature_var);
-
+/* *
         mavlink_message_t msg;
         mavlink_msg_hil_sensor_pack_chan(mavlink->getSystemId(),
                                          mavlink->getComponentId(),
@@ -1391,6 +1484,13 @@ void UAS::sendHilSensors(quint64 time_us, float xacc, float yacc, float zacc, fl
                                          yawspeed_corrupt, xmag_corrupt, ymag_corrupt, zmag_corrupt, abs_pressure_corrupt,
                                          diff_pressure_corrupt, pressure_alt_corrupt, temperature_corrupt, fields_changed);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+		_vehicle->sendHILSensor( xacc_corrupt, yacc_corrupt, zacc_corrupt,
+								 rollspeed_corrupt, pitchspeed_corrupt, yawspeed_corrupt,
+								 xmag_corrupt, ymag_corrupt, zmag_corrupt,
+								 abs_pressure_corrupt, diff_pressure_corrupt, pressure_alt_corrupt, temperature_corrupt,
+								 fields_changed );
+		
         lastSendTimeSensors = QGC::groundTimeMilliseconds();
     }
     else
@@ -1463,7 +1563,7 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
             course += 2.0f * static_cast<float>(M_PI);
         // scale from radians to degrees
         course = (course / M_PI) * 180.0f;
-
+/* *
         mavlink_message_t msg;
         mavlink_msg_hil_gps_pack_chan(mavlink->getSystemId(),
                                       mavlink->getComponentId(),
@@ -1472,6 +1572,9 @@ void UAS::sendHilGps(quint64 time_us, double lat, double lon, double alt, int fi
                                       time_us, fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, vn*1e2, ve*1e2, vd*1e2, course*1e2, satellites);
         lastSendTimeGPS = QGC::groundTimeMilliseconds();
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+		lastSendTimeGPS = QGC::groundTimeMilliseconds();
+		_vehicle->sendHILGPS( fix_type, lat*1e7, lon*1e7, alt*1e3, eph*1e2, epv*1e2, vel*1e2, vn*1e2, ve*1e2, vd*1e2, course*1e2, satellites );
     }
     else
     {
@@ -1527,7 +1630,7 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
     if (!_vehicle) {
         return;
     }
-
+/* *
     mavlink_message_t message;
 
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
@@ -1554,6 +1657,14 @@ void UAS::sendMapRCToParam(QString param_id, float scale, float value0, quint8 p
                                        valueMin,
                                        valueMax);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+/* */
+	_vehicle->sendParameterMapRC( param_id,
+								  -1,
+								  param_rc_channel_index,
+								  value0,
+								  scale,
+								  valueMin,
+								  valueMax );
     //qDebug() << "Mavlink message sent";
 }
 
@@ -1566,6 +1677,7 @@ void UAS::unsetRCToParameterMap()
     char param_id_cstr[MAVLINK_MSG_PARAM_MAP_RC_FIELD_PARAM_ID_LEN] = {};
 
     for (int i = 0; i < 3; i++) {
+/* *		
         mavlink_message_t message;
         mavlink_msg_param_map_rc_pack_chan(mavlink->getSystemId(),
                                            mavlink->getComponentId(),
@@ -1581,6 +1693,14 @@ void UAS::unsetRCToParameterMap()
                                            0.0f,
                                            0.0f);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
+/* */
+		_vehicle->sendParameterMapRC( QString(param_id_cstr),
+									  -2,
+									  i,
+									  0.0f,
+									  0.0f,
+									  0.0f,
+									  0.0f );
     }
 }
 

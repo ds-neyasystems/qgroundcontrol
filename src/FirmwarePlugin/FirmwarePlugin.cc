@@ -161,7 +161,7 @@ bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_mess
     return true;
 }
 
-void FirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
+void FirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, CommInterface* outgoingLink, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(outgoingLink);

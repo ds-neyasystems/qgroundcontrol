@@ -17,6 +17,7 @@
 
 #include "UASInterface.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 
 #ifdef __GNUC__
   #define PACKED_STRUCT( __Declaration__ ) __Declaration__ __attribute__((packed))
@@ -210,7 +211,7 @@ private:
     int             _ackNumTries;                   ///< current number of tries
     
     Vehicle*        _vehicle;
-    LinkInterface*  _dedicatedLink; ///< Link to use for communication
+//    LinkInterface*  _dedicatedLink; ///< Link to use for communication
     
     Request  _lastOutgoingRequest; ///< contains the last outgoing packet
 

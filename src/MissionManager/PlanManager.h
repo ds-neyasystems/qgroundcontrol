@@ -17,7 +17,7 @@
 #include "MissionItem.h"
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
-#include "LinkInterface.h"
+//#include "LinkInterface.h"
 
 class Vehicle;
 
@@ -89,7 +89,11 @@ signals:
     void resumeMissionUploadFail    (void);
 
 private slots:
-    void _mavlinkMessageReceived(const mavlink_message_t& message);
+//    void _mavlinkMessageReceived(const mavlink_message_t& message);
+	void _handleMissionAck( Vehicle* vehicle, uint8_t type, uint8_t mission_type );
+	void _handleMissionCount( Vehicle* vehicle, uint8_t mission_type, uint16_t count );
+	void _handleMissionItem( Vehicle* vehicle, MissionItem mission_item );
+	void _handleMissionRequest( Vehicle* vehicle, uint8_t mission_type, uint16_t sequence, bool mission_int );
     void _ackTimeout(void);
 
 protected:
@@ -112,10 +116,10 @@ protected:
     void _startAckTimeout(AckType_t ack);
     bool _checkForExpectedAck(AckType_t receivedAck);
     void _readTransactionComplete(void);
-    void _handleMissionCount(const mavlink_message_t& message);
-    void _handleMissionItem(const mavlink_message_t& message, bool missionItemInt);
-    void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
-    void _handleMissionAck(const mavlink_message_t& message);
+//    void _handleMissionCount(const mavlink_message_t& message);
+//    void _handleMissionItem(const mavlink_message_t& message, bool missionItemInt);
+//    void _handleMissionRequest(const mavlink_message_t& message, bool missionItemInt);
+//    void _handleMissionAck(const mavlink_message_t& message);
     void _requestNextMissionItem(void);
     void _clearMissionItems(void);
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
@@ -136,7 +140,7 @@ protected:
 protected:
     Vehicle*            _vehicle;
     MAV_MISSION_TYPE    _planType;
-    LinkInterface*      _dedicatedLink;
+//    LinkInterface*      _dedicatedLink;
 
     QTimer*             _ackTimeoutTimer;
     AckType_t           _expectedAck;

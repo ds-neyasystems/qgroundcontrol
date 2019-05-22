@@ -1,29 +1,34 @@
 
 set(EXTRA_SRC)
-if(BUILD_TESTING)
-	list(APPEND EXTRA_SRC
-		MockLink.cc
-		MockLinkFileServer.cc
-		MockLinkMissionItemHandler.cc
-	)
-endif()
+#if(BUILD_TESTING)
+#	list(APPEND EXTRA_SRC
+#		MockLink.cc
+#		MockLinkFileServer.cc
+#		MockLinkMissionItemHandler.cc
+#	)
+#endif()
 
 add_library(comm
-	#BluetoothLink.cc
-	LinkConfiguration.cc
-	LinkInterface.cc
-	LinkManager.cc
-	LogReplayLink.cc
+  #BluetoothLink.cc
+  CommInterface.cc
+  CommInterfaceConfiguration.cc
+  CommManager.cc
+#	LinkConfiguration.cc
+#	LinkInterface.cc
+#	LinkManager.cc
+#	LogReplayLink.cc
 	MavlinkMessagesTimer.cc
-	MAVLinkProtocol.cc
+	MAVLinkCommInterface.cc
+#	MAVLinkProtocol.cc
+	MAVLinkUDPCommInterface.cc
 	QGCFlightGearLink.cc
 	QGCJSBSimLink.cc
 	QGCMAVLink.cc
 	QGCSerialPortInfo.cc
 	QGCXPlaneLink.cc
-	SerialLink.cc
-	TCPLink.cc
-	UDPLink.cc
+#	SerialLink.cc
+#	TCPLink.cc
+#	UDPLink.cc
 
 	${EXTRA_SRC}
 

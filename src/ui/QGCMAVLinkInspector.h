@@ -4,7 +4,8 @@
 #include <QTimer>
 
 #include "QGCDockWidget.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
+#include "MAVLinkCommInterface.h"
 #include "Vehicle.h"
 
 namespace Ui {

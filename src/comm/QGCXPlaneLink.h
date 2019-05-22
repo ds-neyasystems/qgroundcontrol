@@ -24,7 +24,7 @@
 #include <QUdpSocket>
 #include <QTimer>
 #include <QProcess>
-#include <LinkInterface.h>
+//#include <LinkInterface.h>
 #include "QGCConfig.h"
 #include "QGCHilLink.h"
 #include "Vehicle.h"

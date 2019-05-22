@@ -9,7 +9,8 @@
 
 #include "MultiVehicleManager.h"
 #include "AutoPilotPlugin.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
+#include "MAVLinkCommInterface.h"
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "FollowMe.h"
@@ -37,13 +38,13 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _offlineEditingVehicle(NULL)
     , _firmwarePluginManager(NULL)
     , _joystickManager(NULL)
-    , _mavlinkProtocol(NULL)
+//    , _mavlinkProtocol(NULL)
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
 
     _gcsHeartbeatEnabled = settings.value(_gcsHeartbeatEnabledKey, true).toBool();
-
+	
     _gcsHeartbeatTimer.setInterval(_gcsHeartbeatRateMSecs);
     _gcsHeartbeatTimer.setSingleShot(false);
     connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
@@ -58,12 +59,12 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
     _firmwarePluginManager =     _toolbox->firmwarePluginManager();
     _joystickManager =           _toolbox->joystickManager();
-    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
+//    _mavlinkProtocol =           _toolbox->mavlinkProtocol();
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<MultiVehicleManager>("QGroundControl.MultiVehicleManager", 1, 0, "MultiVehicleManager", "Reference only");
 
-    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
+//    connect(MAVLinkProtocol::getInstance(), &MAVLinkProtocol::vehicleHeartbeatInfo, this, &MultiVehicleManager::_vehicleHeartbeatInfo);
 
     SettingsManager* settingsManager = toolbox->settingsManager();
     _offlineEditingVehicle = new Vehicle(static_cast<MAV_AUTOPILOT>(settingsManager->appSettings()->offlineEditingFirmwareType()->rawValue().toInt()),
@@ -72,7 +73,7 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
                                          this);
 }
 
-void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
+void MultiVehicleManager::vehicleHeartbeatInfo(CommInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
 {
     // Special case PX4 Flow since depending on firmware it can have different settings. We force to the PX4 Firmware settings.
     if (link->isPX4Flow()) {
@@ -122,7 +123,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                       << vehicleFirmwareType
                                       << vehicleType;
 
-    if (vehicleId == _mavlinkProtocol->getSystemId()) {
+    if (vehicleId == MAVLinkProtocol::getInstance()->getSystemId()) {
         _app->showMessage(tr("Warning: A vehicle is using the same system id as %1: %2").arg(qgcApp()->applicationName()).arg(vehicleId));
     }
 
@@ -161,9 +162,10 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
 void MultiVehicleManager::_requestProtocolVersion(unsigned version)
 {
     unsigned maxversion = 0;
+	MAVLinkProtocol* mavlink = MAVLinkProtocol::getInstance();
 
     if (_vehicles.count() == 0) {
-        _mavlinkProtocol->setVersion(version);
+		mavlink->setCurrentVersion(version);
         return;
     }
 
@@ -175,8 +177,8 @@ void MultiVehicleManager::_requestProtocolVersion(unsigned version)
         }
     }
 
-    if (_mavlinkProtocol->getCurrentVersion() != maxversion) {
-        _mavlinkProtocol->setVersion(maxversion);
+    if (mavlink->getCurrentVersion() != maxversion) {
+        mavlink->setCurrentVersion(maxversion);
     }
 }
 
@@ -360,6 +362,7 @@ void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
 
 void MultiVehicleManager::_sendGCSHeartbeat(void)
 {
+	/*
     // Send a heartbeat out on each link
     LinkManager* linkMgr = _toolbox->linkManager();
     for (int i=0; i<linkMgr->links().count(); i++) {
@@ -382,15 +385,17 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
             link->writeBytesSafe((const char*)buffer, len);
         }
     }
+	*/
+	CommManager::getCommManager()->sendGCSHeartbeat();
 }
 
-bool MultiVehicleManager::linkInUse(LinkInterface* link, Vehicle* skipVehicle)
+bool MultiVehicleManager::linkInUse(CommInterface* link, Vehicle* skipVehicle)
 {
     for (int i=0; i< _vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(_vehicles[i]);
 
         if (vehicle != skipVehicle) {
-            if (vehicle->containsLink(link)) {
+            if (vehicle->containsInterface(link)) {
                 return true;
             }
         }

@@ -14,7 +14,7 @@
 #pragma once
 
 #include "UASInterface.h"
-#include <MAVLinkProtocol.h>
+//#include <MAVLinkProtocol.h>
 #include <QVector3D>
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
@@ -44,7 +44,8 @@ class UAS : public UASInterface
 {
     Q_OBJECT
 public:
-    UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);
+//    UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);
+    UAS(Vehicle* vehicle, FirmwarePluginManager * firmwarePluginManager);	
 
     float lipoFull;  ///< 100% charged voltage
     float lipoEmpty; ///< Discharged voltage
@@ -125,7 +126,7 @@ protected: //COMMENTS FOR TEST UNIT
     QMap<int, QString> components;///< IDs and names of all detected onboard components
 
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
-    MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
+//    MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     float receiveDropRate;        ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;           ///< Percentage of packets that were not received from the MAV by the GCS
 

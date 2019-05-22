@@ -15,8 +15,8 @@
 #include "GPSManager.h"
 #endif
 #include "JoystickManager.h"
-#include "LinkManager.h"
-#include "MAVLinkProtocol.h"
+//#include "LinkManager.h"
+//#include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
 #include "MultiVehicleManager.h"
 #include "QGCImageProvider.h"
@@ -57,8 +57,8 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #endif
     _imageProvider          = new QGCImageProvider          (app, this);
     _joystickManager        = new JoystickManager           (app, this);
-    _linkManager            = new LinkManager               (app, this);
-    _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
+//    _linkManager            = new LinkManager               (app, this);
+//    _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
     _missionCommandTree     = new MissionCommandTree        (app, this);
     _multiVehicleManager    = new MultiVehicleManager       (app, this);
     _mapEngineManager       = new QGCMapEngineManager       (app, this);
@@ -93,8 +93,8 @@ void QGCToolbox::setChildToolboxes(void)
 #endif
     _imageProvider->setToolbox(this);
     _joystickManager->setToolbox(this);
-    _linkManager->setToolbox(this);
-    _mavlinkProtocol->setToolbox(this);
+//    _linkManager->setToolbox(this);
+//    _mavlinkProtocol->setToolbox(this);
     _missionCommandTree->setToolbox(this);
     _multiVehicleManager->setToolbox(this);
     _mapEngineManager->setToolbox(this);

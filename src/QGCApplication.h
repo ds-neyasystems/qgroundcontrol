@@ -23,9 +23,9 @@
 #include <QTimer>
 #include <QQmlApplicationEngine>
 
-#include "LinkConfiguration.h"
-#include "LinkManager.h"
-#include "MAVLinkProtocol.h"
+//#include "LinkConfiguration.h"
+//#include "LinkManager.h"
+//#include "MAVLinkProtocol.h"
 #include "FlightMapSettings.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"

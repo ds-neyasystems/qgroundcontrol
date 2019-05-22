@@ -16,7 +16,9 @@
 
 #include "QGCToolbox.h"
 #include "QGCApplication.h"
-#include "LinkManager.h"
+//#include "LinkManager.h"
+#include "MAVLinkCommInterface.h"
+#include "CommManager.h"
 #include "SettingsFact.h"
 #include "FactMetaData.h"
 #include "SimulatedPosition.h"
@@ -45,7 +47,7 @@ public:
 
     Q_PROPERTY(QString              appName             READ appName                CONSTANT)
 
-    Q_PROPERTY(LinkManager*         linkManager         READ linkManager            CONSTANT)
+    Q_PROPERTY(CommManager*         linkManager         READ linkManager            CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager READ multiVehicleManager    CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager    READ mapEngineManager       CONSTANT)
     Q_PROPERTY(QGCPositionManager*  qgcPositionManger   READ qgcPositionManger      CONSTANT)
@@ -138,7 +140,7 @@ public:
     // Property accesors
 
     QString                 appName             ()  { return qgcApp()->applicationName(); }
-    LinkManager*            linkManager         ()  { return _linkManager; }
+    CommManager*            linkManager         ()  { return CommManager::getCommManager(); }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
     QGCPositionManager*     qgcPositionManger   ()  { return _qgcPositionManager; }
@@ -167,8 +169,8 @@ public:
     qreal zOrderTrajectoryLines     () { return 48; }
     qreal zOrderWaypointLines       () { return 47; }
 
-    bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
-    int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
+    bool    isVersionCheckEnabled   () { return MAVLinkProtocol::getInstance()->versionCheckEnabled(); }
+    int     mavlinkSystemID         () { return MAVLinkProtocol::getInstance()->getSystemId(); }
 
     int     supportedFirmwareCount  ();
     bool    skipSetupPage           () { return _skipSetupPage; }
@@ -204,7 +206,7 @@ signals:
 
 private:
     double                  _flightMapInitialZoom   = 17.0;
-    LinkManager*            _linkManager            = nullptr;
+//    LinkManager*            _linkManager            = nullptr;
     MultiVehicleManager*    _multiVehicleManager    = nullptr;
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
     QGCPositionManager*     _qgcPositionManager     = nullptr;

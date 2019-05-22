@@ -353,6 +353,7 @@ QGCCameraControl::takePhoto()
     }
     if(!_resetting) {
         if(capturesPhotos()) {
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                                                    // Target component
                 MAV_CMD_IMAGE_START_CAPTURE,                                                // Command id
@@ -360,6 +361,13 @@ QGCCameraControl::takePhoto()
                 0,                                                                          // Reserved (Set to 0)
                 static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
                 _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
+/* */
+			_vehicle->sendImageStartCapture( _compID,                                                                  //component id
+											 static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse), //duration between two consecutive pictures (in seconds--ignored if single image)
+											 _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount,                //number of images to capture (0 for unlimited)
+											 0.0f );                                                                   //sequence number (0 - ignore sequence number)
+				
+	
             _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
@@ -383,11 +391,14 @@ QGCCameraControl::stopTakePhoto()
             return false;
         }
         if(capturesPhotos()) {
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                                    // Target component
                 MAV_CMD_IMAGE_STOP_CAPTURE,                                 // Command id
                 false,                                                      // ShowError
                 0);                                                         // Reserved (Set to 0)
+/* */
+			_vehicle->sendImageStopCapture( _compID );
             _setPhotoStatus(PHOTO_CAPTURE_IDLE);
             _captureInfoRetries = 0;
             return true;
@@ -407,12 +418,16 @@ QGCCameraControl::startVideo()
             return false;
         }
         if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_START_CAPTURE,                // Command id
                 true,                                       // ShowError
                 0,                                          // Reserved (Set to 0)
                 0);                                         // CAMERA_CAPTURE_STATUS Frequency
+/* */			
+			_vehicle->sendVideoStartCapture( _compID, //target component
+											 0.0f );  //frequency of status messages (none)
             return true;
         }
     }
@@ -426,11 +441,14 @@ QGCCameraControl::stopVideo()
     if(!_resetting) {
         qCDebug(CameraControlLog) << "stopVideo()";
         if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
                 true,                                       // ShowError
                 0);                                         // Reserved (Set to 0)
+/* */
+			_vehicle->sendVideoStopCapture( _compID );
             return true;
         }
     }
@@ -445,12 +463,15 @@ QGCCameraControl::setVideoMode()
         if(hasModes() && _cameraMode != CAM_MODE_VIDEO) {
             qCDebug(CameraControlLog) << "setVideoMode()";
             //-- Use basic MAVLink message
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_SET_CAMERA_MODE,                // Command id
                 true,                                   // ShowError
                 0,                                      // Reserved (Set to 0)
                 CAM_MODE_VIDEO);                        // Camera mode (0: photo, 1: video)
+/* */
+			_vehicle->sendSetCameraMode( _compID, CAM_MODE_VIDEO );
             _setCameraMode(CAM_MODE_VIDEO);
         }
     }
@@ -464,12 +485,15 @@ QGCCameraControl::setPhotoMode()
         if(hasModes() && _cameraMode != CAM_MODE_PHOTO) {
             qCDebug(CameraControlLog) << "setPhotoMode()";
             //-- Use basic MAVLink message
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_SET_CAMERA_MODE,                // Command id
                 true,                                   // ShowError
                 0,                                      // Reserved (Set to 0)
                 CAM_MODE_PHOTO);                        // Camera mode (0: photo, 1: video)
+/* */
+			_vehicle->sendSetCameraMode( _compID, CAM_MODE_PHOTO );
             _setCameraMode(CAM_MODE_PHOTO);
         }
     }
@@ -484,12 +508,17 @@ QGCCameraControl::setZoomLevel(qreal level)
         //-- Limit
         level = std::min(std::max(level, 0.0), 100.0);
         if(_vehicle) {
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_SET_CAMERA_ZOOM,                // Command id
                 false,                                  // ShowError
                 ZOOM_TYPE_RANGE,                        // Zoom type
                 static_cast<float>(level));             // Level
+/* */
+			_vehicle->sendSetCameraZoom( _compID,
+										 ZOOM_TYPE_RANGE,
+										 static_cast<float>(level) );
         }
     }
 }
@@ -503,12 +532,17 @@ QGCCameraControl::setFocusLevel(qreal level)
         //-- Limit
         level = std::min(std::max(level, 0.0), 100.0);
         if(_vehicle) {
+/* *
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_SET_CAMERA_FOCUS,               // Command id
                 false,                                  // ShowError
                 FOCUS_TYPE_RANGE,                       // Focus type
                 static_cast<float>(level));             // Level
+/* */
+			_vehicle->sendSetCameraFocus( _compID,                    //component id
+										  FOCUS_TYPE_RANGE,           //focus type
+										  static_cast<float>(level)); //focus value
         }
     }
 }
@@ -520,11 +554,15 @@ QGCCameraControl::resetSettings()
     if(!_resetting) {
         qCDebug(CameraControlLog) << "resetSettings()";
         _resetting = true;
+/* *
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_RESET_CAMERA_SETTINGS,          // Command id
             true,                                   // ShowError
             1);                                     // Do Reset
+/* */
+		_vehicle->sendResetCameraSettings( _compID, // component id
+										   1.0f );  // 1: reset      0: don't reset
     }
 }
 
@@ -535,12 +573,17 @@ QGCCameraControl::formatCard(int id)
     if(!_resetting) {
         qCDebug(CameraControlLog) << "formatCard()";
         if(_vehicle) {
+/* *		
             _vehicle->sendMavCommand(
                 _compID,                                // Target component
                 MAV_CMD_STORAGE_FORMAT,                 // Command id
                 true,                                   // ShowError
                 id,                                     // Storage ID (1 for first, 2 for second, etc.)
                 1);                                     // Do Format
+/* */
+			_vehicle->sendStorageFormat( _compID, //component id
+										 id,      //storage id (1 for first, 2 for second)
+										 1 );     //0: do nothing         1: format storage
         }
     }
 }
@@ -551,12 +594,17 @@ QGCCameraControl::stepZoom(int direction)
 {
     qCDebug(CameraControlLog) << "stepZoom()" << direction;
     if(_vehicle && hasZoom()) {
+/* *		
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
             false,                                  // ShowError
             ZOOM_TYPE_STEP,                         // Zoom type
             direction);                             // Direction (-1 wide, 1 tele)
+/* */
+		_vehicle->sendSetCameraZoom( _compID,        //component id
+									 ZOOM_TYPE_STEP, //zoom type
+									 direction );    //zoom value (-1 for wide, 1 for tele)
     }
 }
 
@@ -566,12 +614,17 @@ QGCCameraControl::startZoom(int direction)
 {
     qCDebug(CameraControlLog) << "startZoom()" << direction;
     if(_vehicle && hasZoom()) {
+/* *	
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
             true,                                   // ShowError
             ZOOM_TYPE_CONTINUOUS,                   // Zoom type
             direction);                             // Direction (-1 wide, 1 tele)
+/* */
+		_vehicle->sendSetCameraZoom( _compID,              //component id
+									 ZOOM_TYPE_CONTINUOUS, //zoom type
+									 direction );          //zoom value (-1 for wide, 1 for tele)
     }
 }
 
@@ -581,12 +634,17 @@ QGCCameraControl::stopZoom()
 {
     qCDebug(CameraControlLog) << "stopZoom()";
     if(_vehicle && hasZoom()) {
+/* *
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
             true,                                   // ShowError
             ZOOM_TYPE_CONTINUOUS,                   // Zoom type
             0);                                     // Direction (-1 wide, 1 tele)
+/* */
+		_vehicle->sendSetCameraZoom( _compID,              //component id
+									 ZOOM_TYPE_CONTINUOUS, //zoom type
+									 0 );                  //zoom value (0 for stop)
     }
 }
 
@@ -595,11 +653,15 @@ void
 QGCCameraControl::_requestCaptureStatus()
 {
     qCDebug(CameraControlLog) << "_requestCaptureStatus()";
+/* *
     _vehicle->sendMavCommand(
         _compID,                                // target component
         MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS,  // command id
         false,                                  // showError
         1);                                     // Do Request
+/* */
+	_vehicle->sendRequestCameraCaptureStatus( _compID, // component id
+											  1 );     // 0: do nothing        1: request camera status
 }
 
 //-----------------------------------------------------------------------------
@@ -1083,6 +1145,7 @@ QGCCameraControl::_requestAllParameters()
             qCritical() << "QGCParamIO is NULL" << paramName;
         }
     }
+/* *	
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_message_t msg;
     mavlink_msg_param_ext_request_list_pack_chan(
@@ -1093,6 +1156,8 @@ QGCCameraControl::_requestAllParameters()
         static_cast<uint8_t>(_vehicle->id()),
         static_cast<uint8_t>(compID()));
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+	_vehicle->sendParameterExtRequestList();
     qCDebug(CameraControlLogVerbose) << "Request all parameters";
 }
 
@@ -1341,11 +1406,15 @@ QGCCameraControl::_requestCameraSettings()
 {
     qCDebug(CameraControlLog) << "_requestCameraSettings()";
     if(_vehicle) {
+/* *
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_REQUEST_CAMERA_SETTINGS,        // command id
             false,                                  // showError
             1);                                     // Do Request
+/* */
+		_vehicle->sendRequestCameraSettings( _compID, //component id
+											 1 );     //0: do nothing       1: request camera settings
     }
 }
 
@@ -1355,12 +1424,17 @@ QGCCameraControl::_requestStorageInfo()
 {
     qCDebug(CameraControlLog) << "_requestStorageInfo()";
     if(_vehicle) {
+/* *	
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_REQUEST_STORAGE_INFORMATION,    // command id
             false,                                  // showError
             0,                                      // Storage ID (0 for all, 1 for first, 2 for second, etc.)
             1);                                     // Do Request
+/* */
+		_vehicle->sendRequestStorageInformation( _compID, //component id
+												 0,       //storage id (0 for all)
+												 1 );     // 0: do nothing        1: request storage information
     }
 }
 

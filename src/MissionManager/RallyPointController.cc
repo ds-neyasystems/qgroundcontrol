@@ -15,7 +15,7 @@
 #include "RallyPoint.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "JsonHelper.h"

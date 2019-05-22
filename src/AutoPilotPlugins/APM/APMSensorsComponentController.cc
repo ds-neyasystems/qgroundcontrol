@@ -77,7 +77,7 @@ APMSensorsComponentController::APMSensorsComponentController(void)
         qWarning() << "Sensors component is missing";
     }
 
-    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
+//    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 APMSensorsComponentController::~APMSensorsComponentController()
@@ -261,6 +261,7 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
             getParameterFact(FactSystem::defaultComponentId, _compassCalFitnessParam)->setRawValue(100.0);
 
             _appendStatusLog(tr("Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right ."));
+/* *			
             _vehicle->sendMavCommand(_vehicle->defaultComponentId(),
                                      MAV_CMD_DO_START_MAG_CAL,
                                      true,          // showError
@@ -269,6 +270,12 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
                                      1,             // save values after complete
                                      0,             // no delayed start
                                      0);            // no auto-reboot
+/* */
+			_vehicle->sendDoStartMagnetometerCalibration( compassBits,                    // bitmask of magnetometers to calibrate
+														  0,                              // no auto retry
+														  1,                              // auto save
+														  0,                              // 0 second delay
+														  0 );                            //no auto reboot
 
         } else {
             // Onboard mag cal is not supported
@@ -284,7 +291,10 @@ void APMSensorsComponentController::calibrateCompass(void)
     // First we need to determine if the vehicle support onboard compass cal. There isn't an easy way to
     // do this. A hack is to send the mag cancel command and see if it is accepted.
     connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
-    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+/* */
+//    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+/* */
+	_vehicle->sendDoCancelMagnetometerCalibration();
 
     // Now we wait for the result to come back
 }
@@ -570,7 +580,10 @@ void APMSensorsComponentController::cancelCalibration(void)
         emit waitingForCancelChanged();
         _compassCal.cancelCalibration();
     } else if (_calTypeInProgress == CalTypeOnboardCompass) {
-        _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
+/* */
+//        _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, true /* showError */);
+/* */
+		_vehicle->sendDoCancelMagnetometerCalibration();
         _stopCalibration(StopCalibrationCancelled);
     } else {
         _waitingForCancel = true;
@@ -584,6 +597,7 @@ void APMSensorsComponentController::cancelCalibration(void)
 
 void APMSensorsComponentController::nextClicked(void)
 {
+	/* *
     mavlink_message_t       msg;
     mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
                                       qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
@@ -597,7 +611,8 @@ void APMSensorsComponentController::nextClicked(void)
                                       0);   // target_component
 
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-
+/* */
+	_vehicle->sendCommandAck( 0, 1, 0, 0, 0, 0 );
     if (_calTypeInProgress == CalTypeCompassMot) {
         _stopCalibration(StopCalibrationSuccess);
     }
@@ -615,7 +630,8 @@ bool APMSensorsComponentController::accelSetupNeeded(void) const
 
 bool APMSensorsComponentController::usingUDPLink(void)
 {
-    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+//    return _vehicle->priorityLink()->getLinkConfiguration()->type() == LinkConfiguration::TypeUdp;
+	return _vehicle->priorityLink()->getConfiguration()->type() == CommInterfaceConfiguration::TypeUdp;
 }
 
 void APMSensorsComponentController::_handleCommandAck(mavlink_message_t& message)
@@ -732,7 +748,7 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
 
     }
 }
-
+/*
 void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
@@ -753,7 +769,7 @@ void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link,
         break;
     }
 }
-
+*/
 void APMSensorsComponentController::_restorePreviousCompassCalFitness(void)
 {
     if (_restoreCompassCalFitness) {

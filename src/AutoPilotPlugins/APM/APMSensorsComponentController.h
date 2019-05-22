@@ -133,7 +133,7 @@ signals:
 
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text);
-    void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
+//    void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
     void _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
 
 private:

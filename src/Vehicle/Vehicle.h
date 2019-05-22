@@ -14,10 +14,11 @@
 #include <QGeoCoordinate>
 
 #include "FactGroup.h"
-#include "LinkInterface.h"
+//#include "LinkInterface.h"
+#include "CommInterface.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
 #include "QGCMapCircle.h"
@@ -36,6 +37,7 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
+class MultiVehicleManager;
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
 #endif
@@ -488,8 +490,9 @@ class Vehicle : public FactGroup
 {
     Q_OBJECT
 
+	friend class MultiVehicleManager;
 public:
-    Vehicle(LinkInterface*          link,
+    Vehicle(CommInterface*          link,
             int                     vehicleId,
             int                     defaultComponentId,
             MAV_AUTOPILOT           firmwareType,
@@ -625,7 +628,7 @@ public:
     Q_PROPERTY(bool                 supportsTerrainFrame    READ supportsTerrainFrame                                   NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QString              priorityLinkName        READ priorityLinkName       WRITE setPriorityLinkByName     NOTIFY priorityLinkNameChanged)
     Q_PROPERTY(QVariantList         links                   READ links                                                  NOTIFY linksChanged)
-    Q_PROPERTY(LinkInterface*       priorityLink            READ priorityLink                                           NOTIFY priorityLinkNameChanged)
+    Q_PROPERTY(CommInterface*       priorityLink            READ priorityLink                                           NOTIFY priorityLinkNameChanged)
     Q_PROPERTY(quint64              mavlinkSentCount        READ mavlinkSentCount                                       NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkReceivedCount    READ mavlinkReceivedCount                                   NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkLossCount        READ mavlinkLossCount                                       NOTIFY mavlinkStatusChanged)
@@ -796,11 +799,11 @@ public:
 
     /// Returns the highest quality link available to the Vehicle. If you need to hold a reference to this link use
     /// LinkManager::sharedLinkInterfaceForGet to get QSharedPointer for link.
-    LinkInterface* priorityLink(void) { return _priorityLink.data(); }
+    CommInterface* priorityLink(void) { return _priorityLink.data(); }
 
     /// Sends a message to the specified link
     /// @return true: message sent, false: Link no longer connected
-    bool sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
+//    bool sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
 
     /// Sends the specified messages multiple times to the vehicle in order to attempt to
     /// guarantee that it makes it to the vehicle.
@@ -832,6 +835,7 @@ public:
     QString priorityLinkName(void) const;
     QVariantList links(void) const;
     void setPriorityLinkByName(const QString& priorityLinkName);
+	void checkLink(CommInterface* link);
 
     bool hilMode(void);
     void setHilMode(bool hilMode);
@@ -972,7 +976,7 @@ public:
 
     static const int cMaxRcChannels = 18;
 
-    bool containsLink(LinkInterface* link) { return _links.contains(link); }
+    bool containsInterface(CommInterface* link) { return _links.contains(link); }
 
     /// Sends the specified MAV_CMD to the vehicle. If no Ack is received command will be retried. If a sendMavCommand is already in progress
     /// the command will be queued and sent when the previous command completes.
@@ -1074,6 +1078,120 @@ public:
     quint64     mavlinkLossCount        () { return _mavlinkLossCount; }        /// Total number of lost messages
     float       mavlinkLossPercent      () { return _mavlinkLossPercent; }      /// Running loss rate
 
+	//Message send functions
+	void sendCommandInt( uint8_t target_component, uint8_t frame, uint16_t command, uint8_t current, uint8_t autocontinue, float param1, float param2, float param3, float param4, int32_t x, int32_t y, float z);
+	void sendCommandLong( uint8_t target_component, uint16_t command, uint8_t confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7 );
+	void sendCommandAck( uint16_t command, uint8_t result, uint8_t progress, int32_t result_param2, uint8_t target_system, uint8_t target_component );
+	void sendCommandMissionStart();
+	void sendCommandNavTakeoff( float min_pitch, float yaw, float latitude, float longitude, float altitude );
+	void sendCommandStartRXPair( float rx_type, float rx_subtype );
+	void sendDataTransmissionHandshake( uint8_t type,uint32_t size,uint16_t width,uint16_t height,uint16_t packets,uint8_t payload,uint8_t jpg_quality) ;
+	void sendDoCancelMagnetometerCalibration();
+	void sendDoStartMagnetometerCalibration( float magnetometers, float auto_retry, float auto_save, float delay, float auto_reboot );
+	void sendFileTransfer( QByteArray payload );
+	void sendFollowTarget( int latitude, int longitude, float altitude, float velocity[3], float acceleration[3], float attitude_q[4], float rates[3], float position_cov[3], uint8_t est_capabilities );
+	void sendGPSRTCM( QByteArray rtcm_data, uint8_t sequence_id );
+	void sendHILGPS( uint8_t fix_type,int32_t lat,int32_t lon,int32_t alt,uint16_t eph,uint16_t epv,uint16_t vel,int16_t vn,int16_t ve,int16_t vd,uint16_t cog,uint8_t satellites_visible );
+	void sendHILSensor( float xacc,float yacc,float zacc,float xgyro,float ygyro,float zgyro,float xmag,float ymag,float zmag,float abs_pressure,float diff_pressure,float pressure_alt,float temperature,uint32_t fields_updated );
+	void sendHILStateQuaternion( float attitude_quaternion[4], float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon,	int32_t alt, int16_t vx, int16_t vy, int16_t vz, uint16_t ind_airspeed,	uint16_t true_airspeed, int16_t xacc, int16_t yacc,	int16_t zacc);
+	void sendImageStartCapture( int target_component, float image_delay, float num_images, float capture_sequence );
+	void sendImageStopCapture( int target_component );
+	void sendLogErase();
+	void sendLogRequestData( uint16_t id, uint32_t offset, uint32_t count );
+	void sendLogRequestList( uint32_t start, uint32_t end);
+	void sendLoggingAck( uint16_t seq );
+	void sendManualControl( uint8_t target_system, float pitch, float roll, float thrust, float yaw, uint16_t buttons );
+	void sendMissionAck( int target_component, int result, int mission_type );
+	void sendMissionAllClear( int target_component, int mission_type );
+	void sendMissionCount( int target_component, int count, int mission_type );
+	void sendMissionItem( int target_component, int sequence, int frame, int command, int current, int autocontinue, float param1, float param2, float param3, float param4, int x, int y, float z, int mission_type );
+	void sendMissionItemInt( int target_component, int sequence, int frame, int command, int current, int autocontinue, float param1, float param2, float param3, float param4, int x, int y, float z, int mission_type );
+	void sendMissionRequest( int target_component, int sequence, int mission_type );
+	void sendMissionRequestList( int target_component, int mission_type );
+	void sendMissionSetCurrentSequence( uint16_t seq );
+	void sendMode( uint8_t new_base_mode, uint32_t custom_mode );
+	void sendParameterExtRequestList();
+	void sendParameterExtRequestRead( QString param_id );
+	void sendParameterExtSet( QString param_id, uint8_t param_value[128],  uint8_t param_type );
+	void sendParameterMapRC( QString param_id,int16_t param_index,uint8_t parameter_rc_channel_index,float param_value0,float scale,float param_value_min,float param_value_max );
+	void sendParameterRequestList();
+	void sendParameterRequestRead( QString paramName, int paramIndex );
+	void sendParameterSet( uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type );
+	void sendPause();
+	void sendPreflightRebootShutdown( int target_component, float autopilot, float onboard_computer, float camera, float mount, float camera_id );
+	void sendPreflightSetSensorOffsets( int target_component, float sensor_id, float x_offset, float y_offset, float z_offset );
+	void sendPreflightStorage( int target_component, float parameter_storage, float mission_storage, float onboard_logging );
+	void sendRequestCameraCaptureStatus( int target_component, float request );
+	void sendRequestCameraSettings( int target_component, float request );
+	void sendRequestStorageInformation( int target_component, float storage_id, float request );
+	void sendRequestVideoStreamInformation( int target_component, float stream_id, float send_information );
+	void sendResetCameraSettings( int target_component, float reset );
+	void sendSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust);
+	void sendSetCameraFocus( int target_component, float focus_type, float focus_value );
+	void sendSetCameraMode( int target_component, float camera_mode );
+	void sendSetCameraZoom( int target_component, float zoom_type, float zoom_value );
+	void sendSetPositionTargetLocalNED( float position[3], float velocity[3], float acceleration[3], float yaw, float yaw_rate, uint16_t type_mask, uint8_t coordinate_frame);
+	void sendStopBusConfig();
+	void sendStopCalibration();
+	void sendStorageFormat( int target_component, float storage_id, float format );
+	void sendSystemTime( uint64_t time_unix_usec, uint32_t time_boot_ms );
+	void sendVideoStartCapture( int target_component, float status_frequency );
+	void sendVideoStartStreaming( int target_component, float stream_id );
+	void sendVideoStopCapture( int target_component );
+	void sendVideoStopStreaming( int target_component, float stream_id );
+
+public slots:
+	//Message Handlers
+	void handleADSBVehicle( Vehicle* vehicle, uint32_t ICAO_address, int32_t latitude, int32_t longitude, int32_t altitude, uint16_t heading, uint16_t flags, QString callsign );
+	void handleAltitude( Vehicle* vehicle, float altitude_amsl, float altitude_relative = NAN );
+	void handleAttitude( Vehicle* vehicle, float roll, float pitch, float yaw );
+	void handleAttitudeQuaternion( Vehicle* vehicle, float roll, float pitch, float yaw, float roll_rate, float pitch_rate, float yaw_rate );
+	void handleAttitudeTarget( Vehicle* vehicle, float roll, float pitch, float yaw, float roll_rate, float pitch_rate, float yaw_rate );
+//	void handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, int firmware_version_type, int major_version, int minor_version, int patch_version, int custom_major_version, int custom_minor_version, int custom_patch_version, bool capability_misison, bool capability_command, bool capability_mavlink2, bool capability_fence, bool capability_rally );
+	void handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint8_t custom_version[8], uint64_t capabilities );
+	void handleBatteryChargeState( Vehicle* vehicle, int battery_id, int charge_state );
+	void handleBatteryCurrentConsumed( Vehicle* vehicle, int battery_id, int current_consumed );
+	void handleBatteryRemaining( Vehicle* vehicle, int battery_id, int8_t percent_remaining );
+	void handleBatteryVoltage( Vehicle* vehicle, int battery_id, double voltage, double current_battery );
+	void handleCameraCaptureStatus( Vehicle* vehicle, float available_capacity, unsigned char image_status, unsigned char video_status );
+	void handleCameraImageCaptured( Vehicle* vehicle, double latitude, double longitude, float altitude );
+	void handleCameraInfo(Vehicle* vehicle);
+	void handleCameraSettings( Vehicle* vehicle, unsigned char mode, float zoom_level, float focus_level );
+	void handleCommandAck( Vehicle* vehicle, int component_id, int command, int result );
+	void handleCommandLong(Vehicle* vehicle);
+	void handleDataTransmissionHandshake( Vehicle* vehicle, uint32_t size, uint16_t width, uint16_t height, uint16_t packets, uint8_t type, uint8_t payload, uint8_t jpg_quality );
+	void handleDistanceSensor( Vehicle* vehicle, uint8_t id, uint16_t current_distnace, uint8_t orientation );
+	void handleEstimatorStatus( Vehicle* vehicle, float vel_ratio, float pos_horiz_ratio, float pos_vert_ratio, float mag_ratio, float hagl_ratio, float tas_ratio, float pos_horiz_accuracy, float pos_vert_accuracy, bool estimator_attitude, bool estimator_velocity_horiz, bool estimator_velocity_vert, bool estimator_pos_horiz_rel, bool estimator_pos_horiz_abs, bool estimator_pos_vert_abs, bool estimator_pos_vert_agl, bool estimator_const_pos_mode, bool estimator_pred_pos_horiz_rel, bool estimator_pred_pos_horiz_abs, bool estimator_gps_glitch, bool estimator_accel_error );
+	void handleExtendedSysState( Vehicle* vehicle, uint8_t vtol_state, uint8_t landed_state );
+	void handleGPS( Vehicle* vehicle, double latitude, double longitude, float altitude );
+	void handleGPSData( Vehicle* vehicle, double latitude, double longitude, uint16_t eph, uint16_t epv, uint16_t course_over_ground, uint8_t fix_type, uint8_t satellites_visible );
+	void handleHeartbeat( Vehicle* vehicle, uint8_t base_mode, uint8_t custom_mode );
+	void handleHomePosition( Vehicle* vehicle, double latitude, double longitude, double altitude );
+	void handleMagneticCalibrationReport( Vehicle* vehicle, uint8_t compass_id, uint8_t calibration_status, float fitness );
+	void handleMissionAck( Vehicle* vehicle, uint8_t type, uint8_t mission_type );
+	void handleMissionCount( Vehicle* vehicle, uint8_t mission_type, uint16_t count );
+	void handleMissionCurrent( Vehicle* vehicle, uint16_t sequence );
+	void handleMissionItem( Vehicle* vehicle, MissionItem mission_item );
+	void handleMissionRequest( Vehicle* vehicle, uint8_t mission_type, uint16_t sequence, bool mission_int );
+	void handleOrbitExecutionStatus( Vehicle* vehicle, double latitude, double longitude, float radius );
+	void handleParamValue( Vehicle* vehicle, uint16_t parameter_count, uint16_t parameter_index, QString parameter_name, QVariant parameter_value );
+	void handlePing( Vehicle* vehicle, uint64_t time_usec, uint32_t sequence );
+	void handlePreflightRebootShutdown( Vehicle* vehicle, float reboot_shutdown_command );
+	void handleProtocolVersion(Vehicle* vehicle);
+	void handleRCChannels( Vehicle* vehicle, uint8_t rssi, QList<int> pwm_values );
+	void handleRadioStatus(Vehicle* vehicle );
+	void handleRawIMU(Vehicle* vehicle );
+	void handleScaledIMU(Vehicle* vehicle );
+	void handleStatusText(Vehicle* vehicle );
+	void handleStorageInfo(Vehicle* vehicle );
+	void handleSysStatus(Vehicle* vehicle );
+	void handleTemperature( Vehicle* vehicle, int sensor_id, double temperature );
+	void handleVFRHUD(Vehicle* vehicle );
+	void handleVelocity( Vehicle* vehicle, double vx, double vy, double vz );
+	void handleVibration(Vehicle* vehicle );
+	void handleWind(Vehicle* vehicle);
+	void handleWindCovariance(Vehicle* vehicle);	
+	
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
@@ -1118,7 +1236,7 @@ signals:
     void messagesLostChanged        ();
 
     /// Used internally to move sendMessage call to main thread
-    void _sendMessageOnLinkOnThread(LinkInterface* link, mavlink_message_t message);
+    void _sendMessageOnLinkOnThread(CommInterface* link, mavlink_message_t message);
 
     void messageTypeChanged         ();
     void newMessageCountChanged     ();
@@ -1181,10 +1299,16 @@ signals:
     void requestProtocolVersion(unsigned version);
     void mavlinkStatusChanged();
 
+	//Mission Messages
+	void receivedMissionAck( Vehicle* vehicle, uint8_t type, uint8_t mission_type );
+	void receivedMissionCount( Vehicle* vehicle, uint8_t mission_type, uint16_t count );
+	void receivedMissionItem( Vehicle* vehicle, MissionItem mission_item );
+	void receivedMissionRequest( Vehicle* vehicle, uint8_t mission_type, uint16_t sequence, bool mission_int );
+	
 private slots:
-    void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
-    void _linkInactiveOrDeleted(LinkInterface* link);
-    void _sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
+//    void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
+    void _linkInactiveOrDeleted(CommInterface* link);
+    void _sendMessageOnLink(CommInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext(void);
     void _addNewMapTrajectoryPoint(void);
     void _parametersReady(bool parametersReady);
@@ -1220,12 +1344,13 @@ private slots:
     void _orbitTelemetryTimeout (void);
 
 private:
-    bool _containsLink(LinkInterface* link);
-    void _addLink(LinkInterface* link);
+    bool _containsInterface(CommInterface* interface);
+    void _addLink(CommInterface* link);
     void _loadSettings(void);
     void _saveSettings(void);
     void _startJoystick(bool start);
-    void _handlePing(LinkInterface* link, mavlink_message_t& message);
+	
+    void _handlePing(CommInterface* link, mavlink_message_t& message);
     void _handleHomePosition(mavlink_message_t& message);
     void _handleHeartbeat(mavlink_message_t& message);
     void _handleRadioStatus(mavlink_message_t& message);
@@ -1238,8 +1363,8 @@ private:
     void _handleExtendedSysState(mavlink_message_t& message);
     void _handleCommandAck(mavlink_message_t& message);
     void _handleCommandLong(mavlink_message_t& message);
-    void _handleAutopilotVersion(LinkInterface* link, mavlink_message_t& message);
-    void _handleProtocolVersion(LinkInterface* link, mavlink_message_t& message);
+    void _handleAutopilotVersion(CommInterface* link, mavlink_message_t& message);
+    void _handleProtocolVersion(CommInterface* link, mavlink_message_t& message);
     void _handleHilActuatorControls(mavlink_message_t& message);
     void _handleGpsRawInt(mavlink_message_t& message);
     void _handleGlobalPositionInt(mavlink_message_t& message);
@@ -1264,12 +1389,13 @@ private:
 #endif
     void _handleCameraImageCaptured(const mavlink_message_t& message);
     void _handleADSBVehicle(const mavlink_message_t& message);
+	
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
-    void _linkActiveChanged(LinkInterface* link, bool active, int vehicleID);
+    void _linkActiveChanged(CommInterface* link, bool active, int vehicleID);
     void _say(const QString& text);
     QString _vehicleIdSpeech(void);
     void _handleMavlinkLoggingData(mavlink_message_t& message);
@@ -1294,12 +1420,12 @@ private:
     FirmwarePlugin*     _firmwarePlugin;
     QObject*            _firmwarePluginInstanceData;
     AutoPilotPlugin*    _autopilotPlugin;
-    MAVLinkProtocol*    _mavlink;
+//    MAVLinkProtocol*    _mavlink;
     bool                _soloFirmware;
     QGCToolbox*         _toolbox;
     SettingsManager*    _settingsManager;
 
-    QList<LinkInterface*> _links;
+    QList<CommInterface*> _links;
 
     JoystickMode_t  _joystickMode;
     bool            _joystickEnabled;
@@ -1449,7 +1575,7 @@ private:
 
     int _lastAnnouncedLowBatteryPercent;
 
-    SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
+    SharedCommInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
     bool _priorityLinkCommanded;
 
     uint64_t    _mavlinkSentCount       = 0;

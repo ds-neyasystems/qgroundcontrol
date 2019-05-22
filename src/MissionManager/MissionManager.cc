@@ -14,7 +14,7 @@
 #include "MissionManager.h"
 #include "Vehicle.h"
 #include "FirmwarePlugin.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
@@ -42,7 +42,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     _transactionInProgress = TransactionWrite;
 
     _connectToMavlink();
-
+/* *
     mavlink_message_t       messageOut;
     mavlink_mission_item_t  missionItem;
 
@@ -69,7 +69,24 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
                                          &messageOut,
                                          &missionItem);
 
+
     _vehicle->sendMessageOnLink(_dedicatedLink, messageOut);
+/* */
+	_vehicle->sendMissionItem( _vehicle->defaultComponentId(), //target component
+							   0,                              //sequence
+							   MAV_CMD_NAV_WAYPOINT,           //command
+							   MAV_FRAME_GLOBAL_RELATIVE_ALT,  //frame
+							   altChangeOnly ? 3 : 2,          //current
+							   true,                           //autocontinue
+							   0,                              //param1
+							   0,                              //param2
+							   0,                              //param3
+							   0,                              //param4
+							   gotoCoord.latitude(),           //x
+							   gotoCoord.longitude(),          //y
+							   gotoCoord.altitude(),           //z
+							   0);                             //mission type (?)
+	
     _startAckTimeout(AckGuidedItem);
     emit inProgressChanged(true);
 }

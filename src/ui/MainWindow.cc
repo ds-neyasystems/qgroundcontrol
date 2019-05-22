@@ -28,13 +28,13 @@
 #include <QDialog>
 
 #include "QGC.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 #include "MainWindow.h"
 #include "AudioOutput.h"
-#ifndef __mobile__
-#include "QGCMAVLinkLogPlayer.h"
-#endif
-#include "MAVLinkDecoder.h"
+//#ifndef __mobile__
+//#include "QGCMAVLinkLogPlayer.h"
+//#endif
+//#include "MAVLinkDecoder.h"
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "LogCompressor.h"
@@ -43,7 +43,7 @@
 #include "QGCCorePlugin.h"
 
 #ifndef __mobile__
-#include "Linecharts.h"
+//#include "Linecharts.h"
 #include "QGCUASFileViewMulti.h"
 #include "CustomCommandWidget.h"
 #include "QGCDockWidget.h"
@@ -51,9 +51,9 @@
 #include "AppMessages.h"
 #endif
 
-#ifndef NO_SERIAL_LINK
-#include "SerialLink.h"
-#endif
+//#ifndef NO_SERIAL_LINK
+//#include "SerialLink.h"
+//#endif
 
 #ifdef UNITTEST_BUILD
 #include "QmlControls/QmlTestWidget.h"
@@ -64,19 +64,19 @@ const char* MAIN_SETTINGS_GROUP = "QGC_MAINWINDOW";
 
 #ifndef __mobile__
 enum DockWidgetTypes {
-    MAVLINK_INSPECTOR,
+//    MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
     ONBOARD_FILES,
     HIL_CONFIG,
-    ANALYZE
+//    ANALYZE
 };
 
 static const char *rgDockWidgetNames[] = {
-    "MAVLink Inspector",
+//    "MAVLink Inspector",
     "Custom Command",
     "Onboard Files",
     "HIL Config",
-    "Analyze"
+//    "Analyze"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -105,12 +105,12 @@ void MainWindow::deleteInstance(void)
 /// @brief Private constructor for MainWindow. MainWindow singleton is only ever created
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.
-MainWindow::MainWindow()
-    : _mavlinkDecoder       (NULL)
-    , _lowPowerMode         (false)
-    , _showStatusBar        (false)
-    , _mainQmlWidgetHolder  (NULL)
-    , _forceClose           (false)
+MainWindow::MainWindow() :
+//    _mavlinkDecoder       (NULL)
+	_lowPowerMode         (false),
+	_showStatusBar        (false),
+	_mainQmlWidgetHolder  (NULL),
+	_forceClose           (false)
 {
     _instance = this;
 
@@ -241,13 +241,13 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-    if (_mavlinkDecoder) {
-        // Enforce thread-safe shutdown of the mavlink decoder
-        _mavlinkDecoder->finish();
-        _mavlinkDecoder->wait(1000);
-        _mavlinkDecoder->deleteLater();
-        _mavlinkDecoder = NULL;
-    }
+//    if (_mavlinkDecoder) {
+//        // Enforce thread-safe shutdown of the mavlink decoder
+//        _mavlinkDecoder->finish();
+//        _mavlinkDecoder->wait(1000);
+//        _mavlinkDecoder->deleteLater();
+//        _mavlinkDecoder = NULL;
+//    }
 
     // This needs to happen before we get into the QWidget dtor
     // otherwise  the QML engine reads freed data and tries to
@@ -262,22 +262,23 @@ QString MainWindow::_getWindowGeometryKey()
 }
 
 #ifndef __mobile__
+/*
 MAVLinkDecoder* MainWindow::_mavLinkDecoderInstance(void)
 {
     if (!_mavlinkDecoder) {
         _mavlinkDecoder = new MAVLinkDecoder(qgcApp()->toolbox()->mavlinkProtocol());
-        connect(_mavlinkDecoder, &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
+//        connect(_mavlinkDecoder, &MAVLinkDecoder::valueChanged, this, &MainWindow::valueChanged);
     }
 
     return _mavlinkDecoder;
 }
-
+*/
 void MainWindow::_buildCommonWidgets(void)
 {
     // Log player
     // TODO: Make this optional with a preferences setting or under a "View" menu
-    logPlayer = new QGCMAVLinkLogPlayer(statusBar());
-    statusBar()->addPermanentWidget(logPlayer);
+//    logPlayer = new QGCMAVLinkLogPlayer(statusBar());
+//    statusBar()->addPermanentWidget(logPlayer);
 
     // Populate widget menu
     for (int i = 0, end = ARRAY_SIZE(rgDockWidgetNames); i < end; i++) {
@@ -319,9 +320,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
     QAction *action = _mapName2Action[widgetName];
     if(action) {
         switch(action->data().toInt()) {
-            case MAVLINK_INSPECTOR:
-                widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
-                break;
+//            case MAVLINK_INSPECTOR:
+//                widget = new QGCMAVLinkInspector(widgetName, action, qgcApp()->toolbox()->mavlinkProtocol(),this);
+//                break;
             case CUSTOM_COMMAND:
                 widget = new CustomCommandWidget(widgetName, action, this);
                 break;
@@ -331,9 +332,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
             case HIL_CONFIG:
                 widget = new HILDockWidget(widgetName, action, this);
                 break;
-            case ANALYZE:
-                widget = new Linecharts(widgetName, action, _mavLinkDecoderInstance(), this);
-                break;
+//            case ANALYZE:
+//                widget = new Linecharts(widgetName, action, _mavLinkDecoderInstance(), this);
+//                break;
         }
         if(widget) {
             _mapName2DockWidget[widgetName] = widget;
@@ -425,7 +426,7 @@ void MainWindow::configureWindowName()
 void MainWindow::connectCommonActions()
 {
     // Connect internal actions
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
+//    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &MainWindow::_vehicleAdded);
     connect(this, &MainWindow::reallyClose, this, &MainWindow::_reallyClose, Qt::QueuedConnection); // Queued to allow closeEvent to fully unwind before _reallyClose is called
 }
 
@@ -435,12 +436,12 @@ void MainWindow::_openUrl(const QString& url, const QString& errorMessage)
         qgcApp()->showMessage(QString("Could not open information in browser: %1").arg(errorMessage));
     }
 }
-
+/*
 void MainWindow::_vehicleAdded(Vehicle* vehicle)
 {
     connect(vehicle->uas(), &UAS::valueChanged, this, &MainWindow::valueChanged);
 }
-
+*/
 /// Stores the state of the toolbar, status bar and widgets associated with the current view
 void MainWindow::_storeCurrentViewState(void)
 {

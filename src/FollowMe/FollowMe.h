@@ -16,9 +16,9 @@
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
 #include <QElapsedTimer>
-
+#include <QLoggingCategory>
 #include "QGCToolbox.h"
-#include "MAVLinkProtocol.h"
+//#include "MAVLinkProtocol.h"
 
 Q_DECLARE_LOGGING_CATEGORY(FollowMeLog)
 

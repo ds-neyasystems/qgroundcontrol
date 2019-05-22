@@ -35,7 +35,7 @@ const char* ParameterManager::_jsonParamValueKey =          "value";
 ParameterManager::ParameterManager(Vehicle* vehicle)
     : QObject                           (vehicle)
     , _vehicle                          (vehicle)
-    , _mavlink                          (NULL)
+//    , _mavlink                          (NULL)
     , _loadProgress                     (0.0)
     , _parametersReady                  (false)
     , _missingParameters                (false)
@@ -61,7 +61,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
         return;
     }
 
-    _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+//    _mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     _initialRequestTimeoutTimer.setSingleShot(true);
     _initialRequestTimeoutTimer.setInterval(5000);
@@ -427,7 +427,7 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
     }
 
     _dataMutex.unlock();
-
+/* *
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
 
     mavlink_message_t msg;
@@ -438,7 +438,9 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
                                              _vehicle->id(),
                                              componentId);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-
+/* */
+	_vehicle->sendParameterRequestList();
+	
     QString what = (componentId == MAV_COMP_ID_ALL) ? "MAV_COMP_ID_ALL" : QString::number(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Request to refresh all parameters for component ID:" << what;
 }
@@ -680,6 +682,7 @@ Out:
 void ParameterManager::_readParameterRaw(int componentId, const QString& paramName, int paramIndex)
 {
     mavlink_message_t msg;
+/* *
     char fixedParamName[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN];
 
     strncpy(fixedParamName, paramName.toStdString().c_str(), sizeof(fixedParamName));
@@ -692,10 +695,14 @@ void ParameterManager::_readParameterRaw(int componentId, const QString& paramNa
                                              fixedParamName,                 // Named parameter being requested
                                              paramIndex);                    // Parameter index being requested, -1 for named
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+	_vehicle->sendParameterRequestRead( paramName,
+										paramIndex );
 }
 
 void ParameterManager::_writeParameterRaw(int componentId, const QString& paramName, const QVariant& value)
 {
+/* *
     mavlink_param_set_t     p;
     mavlink_param_union_t   union_value;
 
@@ -751,6 +758,11 @@ void ParameterManager::_writeParameterRaw(int componentId, const QString& paramN
                                       &msg,
                                       &p);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+/* */
+	_vehicle->sendParameterSet( componentId,
+								value,
+								paramName,
+								getParameter(componentId, paramName)->type() );
 }
 
 void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
@@ -842,6 +854,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         }
 
         // Return the hash value to notify we don't want any more updates
+/* *
         mavlink_param_set_t     p;
         mavlink_param_union_t   union_value;
         memset(&p, 0, sizeof(p));
@@ -858,7 +871,10 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
                                           &msg,
                                           &p);
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-
+/* */
+		QVariant parameter_value((uint32_t)crc32_value);
+		_vehicle->sendParameterSet( componentId, parameter_value, QString("_HASH_CHECK"), FactMetaData::valueTypeUint32 );
+		
         // Give the user some feedback things loaded properly
         QVariantAnimation *ani = new QVariantAnimation(this);
         ani->setEasingCurve(QEasingCurve::OutCubic);
@@ -1544,11 +1560,18 @@ bool ParameterManager::loadFromJson(const QJsonObject& json, bool required, QStr
 
 void ParameterManager::resetAllParametersToDefaults(void)
 {
+/* *
     _vehicle->sendMavCommand(MAV_COMP_ID_ALL,
                              MAV_CMD_PREFLIGHT_STORAGE,
                              true,  // showError
                              2,     // Reset params to default
                              -1);   // Don't do anything with mission storage
+/* */
+	_vehicle->sendPreflightStorage( MAV_COMP_ID_ALL,// component id
+									2,              // reset parameters to defaults
+									-1,             // do nothing to missions (0?)
+									0 );            // do nothing to logging
+
 }
 
 QString ParameterManager::_logVehiclePrefix(int componentId)

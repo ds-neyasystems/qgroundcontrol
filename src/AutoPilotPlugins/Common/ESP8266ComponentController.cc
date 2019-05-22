@@ -315,7 +315,15 @@ ESP8266ComponentController::restoreDefaults()
 void
 ESP8266ComponentController::_reboot()
 {
-    _vehicle->sendMavCommand(MAV_COMP_ID_UDP_BRIDGE, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 0.0f, 1.0f);
+	/* */
+//    _vehicle->sendMavCommand(MAV_COMP_ID_UDP_BRIDGE, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, true /* showError */, 0.0f, 1.0f);
+	/* */
+	_vehicle->sendPreflightRebootShutdown( MAV_COMP_ID_UDP_BRIDGE, //component id
+										   0.0f,                   // do nothing to autopilot
+										   1.0f,                   // reboot onboard computer
+										   0.0f,                   // do nothing to camera
+										   0.0f,                   // do nothing to mount
+										   0.0f );                 // camera id - doesn't matter since we're doing nothing to the cameras
     qCDebug(ESP8266ComponentControllerLog) << "_reboot()";
 }
 
@@ -323,7 +331,13 @@ ESP8266ComponentController::_reboot()
 void
 ESP8266ComponentController::_restoreDefaults()
 {
-    _vehicle->sendMavCommand(MAV_COMP_ID_UDP_BRIDGE, MAV_CMD_PREFLIGHT_STORAGE, true /* showError */, 2.0f);
+/* */	
+//    _vehicle->sendMavCommand(MAV_COMP_ID_UDP_BRIDGE, MAV_CMD_PREFLIGHT_STORAGE, true /* showError */, 2.0f);
+/* */	
+	_vehicle->sendPreflightStorage( MAV_COMP_ID_UDP_BRIDGE, //component id
+									2.0f,                   //restore parameters to defaults
+									0.0f,                   //read (do nothing?) mission
+									0.0f);                  //ignore onboard logging
     qCDebug(ESP8266ComponentControllerLog) << "_restoreDefaults()";
 }
 
