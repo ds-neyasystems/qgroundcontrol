@@ -1,7 +1,9 @@
 #include <CommInterfaceConfiguration.h>
 #include "MAVLinkUDPCommInterface.h"
+#include "ROS2CommInterface.h"
 
 const QString CommInterfaceConfiguration::settingsRoot = "LinkConfigurations";//"CommInterfaces";
+CommInterfaceConfiguration::TypeMap CommInterfaceConfiguration::_typeMap;
 
 CommInterfaceConfiguration::CommInterfaceConfiguration(const QString& name)
 	: _interface(nullptr),
@@ -95,12 +97,37 @@ CommInterfaceConfiguration* CommInterfaceConfiguration::create(int type, QString
 		qWarning() << "Log Replay Not Available";
 #endif
 		break;
+	case TypeROS2:
+		return new ROS2CommInterfaceConfiguration(name);
+		break;
 	default:
 		qWarning() << "Unknown Configuration Type";
 		break;
 	}
 
+	printf("CommInterfaceConfiguration::create %i:\"%s\" - nullptr\n", type, name.toStdString().c_str());
+	printf("\t%i - UDP\n",TypeUdp);
+	printf("\t%i - ROS2\n",TypeROS2); 
 	return nullptr;
+}
+
+CommInterfaceConfiguration* CommInterfaceConfiguration::create(QString type, QString name)
+{
+	typeMap();
+	TypeMap::const_iterator i = _typeMap.find(type);
+	if( i == _typeMap.constEnd() )
+		return nullptr;
+	return create( i.value(), name );
+}
+
+const CommInterfaceConfiguration::TypeMap& CommInterfaceConfiguration::typeMap()
+{
+	if( !_typeMap.size() )
+	{
+		_typeMap.insert( "UDP", TypeUdp );
+		_typeMap.insert( "ROS2", TypeROS2 );
+	}
+	return _typeMap;
 }
 
 CommInterfaceConfiguration* CommInterfaceConfiguration::duplicate()

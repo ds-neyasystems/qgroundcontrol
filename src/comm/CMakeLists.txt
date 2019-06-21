@@ -8,6 +8,30 @@ set(EXTRA_SRC)
 #	)
 #endif()
 
+## ROS2 STUFF ##
+set( ROS2_LIB_NAMES
+  rclcpp
+  rcl
+  rcutils
+  std_msgs__rosidl_typesupport_cpp )
+
+string(REPLACE ":" "/include;" ROS2_INCLUDE_PATHS $ENV{CMAKE_PREFIX_PATH} )
+include_directories( ${ROS2_INCLUDE_PATHS} )
+
+foreach( LIB ${ROS2_LIB_NAMES} )
+  find_library( PATH_TO_${LIB} ${LIB} )
+  if( NOT PATH_TO_${LIB} STREQUAL "PATH_TO_${LIB}-NOTFOUND" )
+	set( ROS2_LIBS ${ROS2_LIBS} ${PATH_TO_${LIB}} )	
+  else()
+	set( ROS2_LIB_NOTFOUND "${ROS_LIB_NOTFOUND}\n\t${LIB}" )
+  endif()
+endforeach()
+
+if( ROS2_LIB_NOTFOUND )
+  message( WARNING "Failed to find ROS libraries ${ROS_LIB_NOTFOUND} \nMake sure to source \"local_setup.bash\" from your ROS2 workspace install directory" )
+endif()
+## END ROS2 STUFF ##
+
 add_library(comm
   #BluetoothLink.cc
   CommInterface.cc
@@ -26,6 +50,7 @@ add_library(comm
 	QGCMAVLink.cc
 	QGCSerialPortInfo.cc
 	QGCXPlaneLink.cc
+	ROS2CommInterface.cc
 #	SerialLink.cc
 #	TCPLink.cc
 #	UDPLink.cc
@@ -48,6 +73,7 @@ target_link_libraries(comm
 		Qt5::Test
 		Qt5::TextToSpeech
 		Qt5::Widgets
+		${ROS2_LIBS}
 )
 
 target_include_directories(comm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

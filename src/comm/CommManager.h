@@ -2,6 +2,7 @@
 
 //#include <QObject.h>
 #include <QList>
+#include <QMap>
 #include <QElapsedTimer>
 
 #include "CommInterface.h"
@@ -27,13 +28,14 @@ public:
 	
 //  Q_PROPERTY(bool                 isBluetoothAvailable  READ isBluetoothAvailable    CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  linkConfigurations    READ _qmlLinkConfigurations  NOTIFY linkConfigurationsChanged);
-    Q_PROPERTY(QStringList          commTypeStrings       READ commTypeStrings         CONSTANT);
+    Q_PROPERTY(QStringList          linkTypeStrings       READ commTypeStrings         CONSTANT);
 //  Q_PROPERTY(QStringList          serialBaudRates       READ serialBaudRates         CONSTANT)
 //  Q_PROPERTY(QStringList          serialPortStrings     READ serialPortStrings       NOTIFY commPortStringsChanged)
 //  Q_PROPERTY(QStringList          serialPorts           READ serialPorts             NOTIFY commPortsChanged)
 
     // Create/Edit Link Configuration
     Q_INVOKABLE CommInterfaceConfiguration*  createConfiguration         (int type, const QString& name);
+	Q_INVOKABLE CommInterfaceConfiguration*  createConfiguration         (const QString& type, const QString& name);
     Q_INVOKABLE CommInterfaceConfiguration*  startConfigurationEditing   (CommInterfaceConfiguration* config);
     Q_INVOKABLE void                         cancelConfigurationEditing  (CommInterfaceConfiguration* config);// { delete config; }
     Q_INVOKABLE bool                         endConfigurationEditing     (CommInterfaceConfiguration* config, CommInterfaceConfiguration* editedConfig);

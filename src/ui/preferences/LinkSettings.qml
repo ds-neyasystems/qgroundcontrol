@@ -125,6 +125,7 @@ Rectangle {
             text:       qsTr("Connect")
             enabled:    _currentSelection && !_currentSelection.link
             onClicked: {
+				console.log("CreateConnectedLink " + _currentSelection.name)
                 QGroundControl.linkManager.createConnectedLink(_currentSelection)
             }
         }
@@ -160,11 +161,11 @@ Rectangle {
                     editConfig = QGroundControl.linkManager.startConfigurationEditing(linkConfig)
                 } else {
                     // Create new link configuration
-                    if(ScreenTools.isSerialAvailable) {
-                        editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeSerial, "Unnamed")
-                    } else {
+//                    if(ScreenTools.isSerialAvailable) {
+//                        editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeSerial, "Unnamed")
+//                    } else {
                         editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeUdp,    "Unnamed")
-                    }
+//                    }
                 }
             }
             Component.onDestruction: {
@@ -279,7 +280,7 @@ Rectangle {
                                             // Discard link configuration (old type)
                                             QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
                                             // Create new link configuration
-                                            editConfig = QGroundControl.linkManager.createConfiguration(index, name)
+                                            editConfig = QGroundControl.linkManager.createConfiguration(model[index], name)
                                             // Load appropriate configuration panel
                                             linkSettingLoader.source  = editConfig.settingsURL
                                             linkSettingLoader.visible = true

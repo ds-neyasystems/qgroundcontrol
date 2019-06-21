@@ -2,6 +2,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "MAVLinkUDPCommInterface.h"
+#include "ROS2CommInterface.h"
 #include "QGCSerialPortInfo.h"
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "LinkManagerLog")
@@ -56,6 +57,13 @@ CommManager* CommManager::getCommManager()
 
 CommInterfaceConfiguration* CommManager::createConfiguration(int type, const QString& name)
 {
+	printf("CommManager::createConfiguration %i, \"%s\"\n", type, name.toStdString().c_str());
+	return CommInterfaceConfiguration::create(type, name);
+}
+
+CommInterfaceConfiguration* CommManager::createConfiguration(const QString& type, const QString& name)
+{
+	printf("CommManager::createConfiguration \"%s\", \"%s\"\n", type.toStdString().c_str(), name.toStdString().c_str());
 	return CommInterfaceConfiguration::create(type, name);
 }
 
@@ -189,28 +197,31 @@ QList<CommInterface*> CommManager::interfaces()
 
 QStringList CommManager::commTypeStrings() const
 {
-    static QStringList list;
+	return CommInterfaceConfiguration::typeMap().keys();
+/*	
     if(!list.size())
     {
 #ifndef NO_SERIAL_LINK
-        list += tr("Serial");
+//        list += tr("Serial");
 #endif
         list += tr("UDP");
-        list += tr("TCP");
+//        list += tr("TCP");
 #ifdef QGC_ENABLE_BLUETOOTH
-        list += tr("Bluetooth");
+//        list += tr("Bluetooth");
 #endif
 #ifdef QT_DEBUG
-        list += tr("Mock Link");
+//        list += tr("Mock Link");
 #endif
 #ifndef __mobile__
-        list += tr("Log Replay");
+//        list += tr("Log Replay");
 #endif
+		list += tr("ROS2");
         if (list.size() != static_cast<int>(CommInterfaceConfiguration::TypeLast)) {
             qWarning() << "Internal error";
         }
     }
     return list;	
+*/
 }
 
 void CommManager::loadCommConfigurationList()
@@ -384,6 +395,8 @@ CommInterface* CommManager::createConnectedCommInterface(CommInterfaceConfigurat
 #ifdef QT_DEBUG
 		//#TODO
 #endif
+	case CommInterfaceConfiguration::TypeROS2:
+		interface = new ROS2CommInterface(config);
 		break;
 	default:
 		break;
@@ -566,6 +579,7 @@ void CommManager::_addInterface(CommInterface* interface)
 
 QmlObjectListModel* CommManager::_qmlLinkConfigurations()
 {
+	printf("CommManager::_qmlLinkConfigurations %i\n", _qmlConfigurations.count());
 	return &_qmlConfigurations;
 }
 
