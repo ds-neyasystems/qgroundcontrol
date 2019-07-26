@@ -148,8 +148,10 @@ int main(int argc, char *argv[])
     }
 #endif
 
+	qRegisterMetaType<int8_t>("int8_t");
 	qRegisterMetaType<uint8_t>("uint8_t");
 	qRegisterMetaType<uint16_t>("uint16_t");
+	qRegisterMetaType<int32_t>("int32_t");
 	qRegisterMetaType<uint32_t>("uint32_t");
 	qRegisterMetaType<uint64_t>("uint64_t");
 	

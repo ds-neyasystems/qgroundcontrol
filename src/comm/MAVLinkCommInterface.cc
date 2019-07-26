@@ -296,13 +296,16 @@ void MAVLinkCommInterface::_handleMessage( mavlink_message_t& message )
 		FIRMWARE_VERSION_TYPE firmware_version;
 		int version_type, major_version, minor_version, patch_version, major_custom_version, minor_custom_version, patch_custom_version;		
 		bool capability_mission, capability_command, capability_mavlink2, capability_fence, capability_rally;
-
+		uint64_t flight_custom_version;		
+		
 		mavlink_msg_autopilot_version_decode(&message, &autopilot_version);
 
+		memcpy( &flight_custom_version, &*autopilot_version.flight_custom_version, 8 * sizeof(uint8_t) );		
+		
 		emit receivedAutopilotVersion( vehicle,
 									   autopilot_version.uid,
 									   autopilot_version.flight_sw_version,
-									   autopilot_version.flight_custom_version,
+									   flight_custom_version,//autopilot_version.flight_custom_version,
 									   autopilot_version.capabilities );
 /*		
 		version_type = (FIRMWARE_VERSION_TYPE)((autopilot_version.flight_sw_version >> (8*0)) & 0xFF);
@@ -1662,6 +1665,11 @@ void MAVLinkCommInterface::slotParameterSet( uint8_t target_system, uint8_t targ
 	_sendMAVLinkMessage( message );	
 }
 
+void MAVLinkCommInterface::slotROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude )
+{
+	qWarning() << "MAVLinkCommInterface::slotROS2GlobalWaypointCommand - command not supported";
+}
+
 void MAVLinkCommInterface::slotSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust)
 {
 	mavlink_message_t message;
@@ -1770,6 +1778,7 @@ MAVLinkProtocol* MAVLinkProtocol::getInstance()
 {
 	if( _instance == NULL )
 	{
+		qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 		_instance = new MAVLinkProtocol();
 		connect( qgcApp(), &QGCApplication::aboutToQuit, _instance, &MAVLinkProtocol::_aboutToQuit );
 	}

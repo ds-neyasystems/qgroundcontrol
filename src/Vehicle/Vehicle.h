@@ -1126,6 +1126,7 @@ public:
 	void sendRequestStorageInformation( int target_component, float storage_id, float request );
 	void sendRequestVideoStreamInformation( int target_component, float stream_id, float send_information );
 	void sendResetCameraSettings( int target_component, float reset );
+	void sendROS2GlobalWaypointCommand( double latitude, double longitude, double altitude );
 	void sendSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust);
 	void sendSetCameraFocus( int target_component, float focus_type, float focus_value );
 	void sendSetCameraMode( int target_component, float camera_mode );
@@ -1148,7 +1149,7 @@ public slots:
 	void handleAttitudeQuaternion( Vehicle* vehicle, float roll, float pitch, float yaw, float roll_rate, float pitch_rate, float yaw_rate );
 	void handleAttitudeTarget( Vehicle* vehicle, float roll, float pitch, float yaw, float roll_rate, float pitch_rate, float yaw_rate );
 //	void handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, int firmware_version_type, int major_version, int minor_version, int patch_version, int custom_major_version, int custom_minor_version, int custom_patch_version, bool capability_misison, bool capability_command, bool capability_mavlink2, bool capability_fence, bool capability_rally );
-	void handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint8_t custom_version[8], uint64_t capabilities );
+	void handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint64_t custom_version, uint64_t capabilities );
 	void handleBatteryChargeState( Vehicle* vehicle, int battery_id, int charge_state );
 	void handleBatteryCurrentConsumed( Vehicle* vehicle, int battery_id, int current_consumed );
 	void handleBatteryRemaining( Vehicle* vehicle, int battery_id, int8_t percent_remaining );

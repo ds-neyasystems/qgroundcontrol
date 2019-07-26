@@ -57,7 +57,7 @@ Item {
                 var has_hl = false;
                 var links = _activeVehicle.links
                 for (var i = 0; i < links.length; i++) {
-                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].link_active(_activeVehicle.id)})
+                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].interfaceActive(_activeVehicle.id)})
                     linkSelectionMenuItems.push(menuItem)
                     linkSelectionMenu.insertItem(i, menuItem)
 

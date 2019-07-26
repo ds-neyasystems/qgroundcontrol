@@ -5,11 +5,7 @@
 #include <memory>
 
 //ROS2 libraries
-#include "rclcpp/rclcpp.hpp"
 #include "rcutils/cmdline_parser.h"
-
-//ROS2 messages
-#include "std_msgs/msg/string.hpp"
 
 using std::placeholders::_1;
 
@@ -83,8 +79,8 @@ ROS2CommInterface::ROS2CommInterface( CommInterfaceConfiguration::SharedPointer 
 	CommInterface(config, isPX4Flow),
 	_gpsIntAvailable(false),
 	_ros2Thread(),
-	_heartbeatPub(nullptr),
-	_heartbeatSub(nullptr)
+	_globalWaypointCommandPub(nullptr),
+	_globalPoseSub(nullptr)
 {
 	_initializeROS2();
 
@@ -204,13 +200,8 @@ void ROS2CommInterface::slotHILStateQuaternion( float attitude_quaternion[4], fl
 	
 }
 
-//#PLACEHOLDER
 void ROS2CommInterface::slotHeartbeat()
 {
-	std_msgs::msg::String msg;
-
-	msg.data = "QGroungControl Heartbeat";
-	_heartbeatPub->publish(msg);
 }
 
 void ROS2CommInterface::slotLogErase( uint8_t target_system, uint8_t target_component )
@@ -302,6 +293,23 @@ void ROS2CommInterface::slotParameterSet( uint8_t target_system, uint8_t target_
 {
 }
 
+void ROS2CommInterface::slotROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude )
+{
+	utc_msgs::msg::GlobalWaypointCommandType msg;
+
+	msg.position.geodetic_latitude.latitude = latitude;
+	msg.position.geodetic_longitude.longitude = longitude;
+
+	//#TODO figure out source id and session id
+	msg.session_id = "??";
+	msg.source_subsystem_id = "QGroundControl Component";
+	msg.source_system_id  = "QGroundControl";
+	msg.target_subsystem_id = std::to_string(target_component);
+	msg.target_system_id = std::to_string(target_system);
+
+	_globalWaypointCommandPub->publish(msg);
+}
+
 void ROS2CommInterface::slotSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust)
 {
 }
@@ -316,42 +324,90 @@ void ROS2CommInterface::slotSystemTime(uint64_t time_unix_usec,uint32_t time_boo
 
 void ROS2CommInterface::_initializePublishers()
 {
-	_heartbeatPub = _node->create_publisher<std_msgs::msg::String>("Heartbeat"); //#PLACEHOLDER - change message type
+	_globalWaypointCommandPub = _node->create_publisher<utc_msgs::msg::GlobalWaypointCommandType>("global_pose_global_waypoint"); //#TODO: get topic
 }
 
 void ROS2CommInterface::_initializeSubscribers()
 {
-	printf("ROS2CommInterface::_initializeSubscribers\n");
-	_heartbeatSub = _node->create_subscription<std_msgs::msg::String>("Heartbeat", std::bind(&ROS2CommInterface::_handleHeartbeat, this, _1)); //#PLACEHOLDER - change message type
-//	_heartbeatSub = _node->create_subscription<std_msgs::msg::String>("Heartbeat", //#PLACEHOLDER - change message type
-//																	  [this](const std_msgs::msg::String::SharedPtr msg)
-//																	  {
-//																		  _handleHeartbeat(msg);
-//																	  } );
+	_globalPoseSub = _node->create_subscription<utc_msgs::msg::GlobalPoseStatusType>("global_pose_sensor_report_global_pose", std::bind(&ROS2CommInterface::_handleGlobalPose, this, _1));
 }
 
-Vehicle* ROS2CommInterface::_getVehicle()
+Vehicle* ROS2CommInterface::_getVehicle(int system_id)
 {
 	MultiVehicleManager* vehicle_manager;
 	vehicle_manager = qgcApp()->toolbox()->multiVehicleManager();
 
-	//get vehicle from multivehiclemanager
+	if( vehicle_manager == nullptr )
+		return nullptr;
+
+	return vehicle_manager->getVehicleById(system_id);
 }
 
-void ROS2CommInterface::_handleHeartbeat(const std_msgs::msg::String::SharedPtr msg)
+int ROS2CommInterface::_parseSubsystemID(const std::string& id)
 {
-	Vehicle *vehicle = nullptr;
-	uint8_t base_mode = MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
-	uint8_t custom_mode = 0;
-
-	uint8_t vehicle_id = 88;
-	uint8_t component_id = 0;
-	uint8_t autopilot_type = MAV_AUTOPILOT_GENERIC;
-	uint8_t vehicle_type = MAV_TYPE_GENERIC;
-
-	printf("Got heartbeat\n");
-	
-	emit receivedHeartbeat( vehicle, base_mode, custom_mode );
-	emit vehicleHeartbeatInfo(this, vehicle_id, component_id, autopilot_type, vehicle_type);
+	//#PLACEHOLDER
+	return 257;
 }
 
+int ROS2CommInterface::_parseComponentID(const std::string& id)
+{
+	//#PLACEHOLDER
+	return MAV_COMP_ID_AUTOPILOT1;
+}
+
+void ROS2CommInterface::_handleGlobalPose(const utc_msgs::msg::GlobalPoseStatusType::SharedPtr msg)
+{
+	Vehicle *vehicle;
+	int system_id;
+	int component_id;
+	double latitude, longitude, altitude, yaw;
+
+	//Get id of vehicle
+	system_id = _parseSubsystemID(msg->source_system_id);
+	component_id = _parseComponentID(msg->source_subsystem_id);
+
+	//Get vehicle from id
+	vehicle = _getVehicle(system_id);
+
+	//Emit hearbeat info to initialize vehicle in vehicle manager
+	emit vehicleHeartbeatInfo(this, system_id, component_id, MAV_AUTOPILOT_RESERVED, MAV_TYPE_QUADROTOR );
+
+	//If we don't have a valid vehicle, then ignore the rest of the message
+	if( !vehicle )
+		return;
+
+	//Get lat/lon
+	latitude = msg->position.geodetic_position.geodetic_latitude.latitude;
+	longitude = msg->position.geodetic_position.geodetic_longitude.longitude;
+
+	altitude = msg->position.height_above_ellipsoid.altitude;
+
+	yaw = msg->heading;
+
+	//Reset activity timeout timer
+	startActivityTimer(system_id);
+
+	//Emit gps
+	emit receivedGPS( vehicle,
+					  latitude,
+					  longitude,
+					  altitude );
+
+	//Emit altitude
+	emit receivedAltitude( vehicle, altitude, altitude );
+
+	//Emit heading
+	emit receivedAttitude( vehicle, 0.0, 0.0, yaw );
+
+/*
+	emit receivedVelocity( vehicle,
+						   global_position_int.vx / 100.0,
+						   global_position_int.vy / 100.0,
+						   global_position_int.vz / 100.0 );
+*/
+
+	//#TODO get real status
+	//Emit status
+	emit receivedExtendedSysState( vehicle, MAV_LANDED_STATE_IN_AIR, MAV_VTOL_STATE_MC );
+	emit receivedHeartbeat( vehicle, MAV_MODE_FLAG_DECODE_POSITION_SAFETY, 0 ); //#TODO figure out better arm status reporting
+}

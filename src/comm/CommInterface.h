@@ -39,7 +39,7 @@ public:
 	void startActivityTimer(int vehicle_id);
     void clearActivityTimers();
 	
-	virtual QString getName() const;
+	Q_INVOKABLE virtual QString getName() const;
 	virtual bool isConnected() const = 0;
     virtual bool active() const;
 
@@ -80,6 +80,7 @@ public:
     void sendParameterRequestList( uint8_t target_system, uint8_t target_component ) ;
     void sendParameterRequestRead( uint8_t target_system, uint8_t target_component, QString paramName, int paramIndex ) ;
     void sendParameterSet( uint8_t target_system, uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type ) ;
+	void sendROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude );
     void sendSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust) ;
     void sendSetPositionTargetLocalNED( uint8_t target_system, uint8_t target_component, float position[3], float velocity[3], float acceleration[3], float yaw, float yaw_rate, uint16_t type_mask, uint8_t coordinate_frame) ;
 	void sendSystemTime(uint64_t time_unix_usec,uint32_t time_boot_ms);
@@ -123,6 +124,7 @@ public slots:
     virtual void slotParameterRequestList( uint8_t target_system, uint8_t target_component ) = 0;
     virtual void slotParameterRequestRead( uint8_t target_system, uint8_t target_component, QString paramName, int paramIndex ) = 0;
     virtual void slotParameterSet( uint8_t target_system, uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type ) = 0;
+	virtual void slotROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude ) = 0;
     virtual void slotSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust) = 0;
     virtual void slotSetPositionTargetLocalNED( uint8_t target_system, uint8_t target_component, float position[3], float velocity[3], float acceleration[3], float yaw, float yaw_rate, uint16_t type_mask, uint8_t coordinate_frame) = 0;
 	virtual void slotSystemTime(uint64_t time_unix_usec,uint32_t time_boot_ms) = 0;
@@ -170,6 +172,7 @@ signals:
     void signalParameterRequestList( uint8_t target_system, uint8_t target_component ) ;
     void signalParameterRequestRead( uint8_t target_system, uint8_t target_component, QString paramName, int paramIndex ) ;
     void signalParameterSet( uint8_t target_system, uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type ) ;
+	void signalROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude );
     void signalSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust) ;
     void signalSetPositionTargetLocalNED( uint8_t target_system, uint8_t target_component, float position[3], float velocity[3], float acceleration[3], float yaw, float yaw_rate, uint16_t type_mask, uint8_t coordinate_frame) ;
 	void signalSystemTime(uint64_t time_unix_usec,uint32_t time_boot_ms);
@@ -182,7 +185,7 @@ signals:
 	void receivedAttitudeQuaternion( Vehicle* vehicle, float roll, float pitch, float yaw, float roll_rate, float pitch_rate, float yaw_rate );
 	void receivedAttitudeTarget( Vehicle* vehicle, float roll, float pitch, float yaw, float roll_rate, float pitch_rate, float yaw_rate );
 //	void receivedAutopilotVersion( Vehicle* vehicle, uint64_t uid, int firmware_version_type, int major_version, int minor_version, int patch_version, int custom_major_version, int custom_minor_version, int custom_patch_version, bool capability_misison, bool capability_command, bool capability_mavlink2, bool capability_fence, bool capability_rally );
-	void receivedAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint8_t custom_version[8], uint64_t capabilities );
+	void receivedAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint64_t custom_version, uint64_t capabilities );
 	void receivedBatteryChargeState( Vehicle* vehicle, int battery_id, int charge_state );
 	void receivedBatteryCurrentConsumed( Vehicle* vehicle, int battery_id, int current_consumed );
 	void receivedBatteryRemaining( Vehicle* vehicle, int battery_id, int8_t percent_remaining );

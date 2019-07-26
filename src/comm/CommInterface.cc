@@ -62,6 +62,7 @@ CommInterface::CommInterface( CommInterfaceConfiguration::SharedPointer config, 
     QObject::connect(this, &CommInterface::signalParameterRequestList, this, &CommInterface::slotParameterRequestList);
     QObject::connect(this, &CommInterface::signalParameterRequestRead, this, &CommInterface::slotParameterRequestRead);
     QObject::connect(this, &CommInterface::signalParameterSet, this, &CommInterface::slotParameterSet);
+	QObject::connect(this, &CommInterface::signalROS2GlobalWaypointCommand, this, &CommInterface::slotROS2GlobalWaypointCommand);
     QObject::connect(this, &CommInterface::signalSetAttitudeTarget, this, &CommInterface::slotSetAttitudeTarget);
     QObject::connect(this, &CommInterface::signalSetPositionTargetLocalNED, this, &CommInterface::slotSetPositionTargetLocalNED);
 	QObject::connect(this, &CommInterface::signalSystemTime, this, &CommInterface::slotSystemTime);
@@ -310,6 +311,11 @@ void CommInterface::sendParameterRequestRead( uint8_t target_system, uint8_t tar
 void CommInterface::sendParameterSet( uint8_t target_system, uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type )
 {
 	emit signalParameterSet( target_system, target_component, parameter_value, parameter_id, type );
+}
+
+void CommInterface::sendROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude )
+{
+	emit signalROS2GlobalWaypointCommand( target_system, target_component, latitude, longitude, altitude );
 }
 
 void CommInterface::sendSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust)

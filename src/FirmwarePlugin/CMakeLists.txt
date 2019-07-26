@@ -17,6 +17,9 @@ add_library(FirmwarePlugin
 	PX4/PX4FirmwarePluginFactory.cc
 	PX4/PX4ParameterMetaData.cc
 	PX4/PX4Resources.qrc
+
+	ROS2/ROS2FirmwarePlugin.cc
+	ROS2/ROS2FirmwarePluginFactory.cc
 )
 
 target_link_libraries(FirmwarePlugin

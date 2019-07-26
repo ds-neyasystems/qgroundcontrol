@@ -899,6 +899,12 @@ void Vehicle::sendResetCameraSettings( int target_component, float reset )
 					reset );
 }
 
+void Vehicle::sendROS2GlobalWaypointCommand( double latitude, double longitude, double altitude )
+{
+	if(_priorityLink)
+		_priorityLink->sendROS2GlobalWaypointCommand( _id, _defaultComponentId, latitude, longitude, altitude );
+}
+
 void Vehicle::sendSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust)
 {
 	if(_priorityLink)
@@ -1067,10 +1073,14 @@ void Vehicle::handleAttitudeTarget( Vehicle* vehicle, float roll, float pitch, f
     _setpointFactGroup.yawRate()->setRawValue(yaw_rate);	
 }
 
-void Vehicle::handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint8_t custom_version[8], uint64_t capabilities )
+void Vehicle::handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t version, uint64_t custom_version, uint64_t capabilities )
 {
 	if( vehicle != this )
 		return;
+
+	uint8_t flight_custom_version[8];
+
+	memcpy( &*flight_custom_version, &custom_version, 8 * sizeof(uint8_t) );
 	
     _uid = (quint64)uid;
     emit vehicleUIDChanged();
@@ -1089,20 +1099,20 @@ void Vehicle::handleAutopilotVersion( Vehicle* vehicle, uint64_t uid, uint32_t v
     if (px4Firmware()) {
         // Lower 3 bytes is custom version
         int majorVersion, minorVersion, patchVersion;
-        majorVersion = custom_version[2];
-        minorVersion = custom_version[1];
-        patchVersion = custom_version[0];
+        majorVersion = flight_custom_version[2];
+        minorVersion = flight_custom_version[1];
+        patchVersion = flight_custom_version[0];
         setFirmwareCustomVersion(majorVersion, minorVersion, patchVersion);
 
         // PX4 Firmware stores the first 16 characters of the git hash as binary, with the individual bytes in reverse order
         _gitHash = "";
-        QByteArray array((char*)custom_version, 8);
+        QByteArray array((char*)flight_custom_version, 8);
         for (int i = 7; i >= 0; i--) {
-            _gitHash.append(QString("%1").arg(custom_version[i], 2, 16, QChar('0')));
+            _gitHash.append(QString("%1").arg(flight_custom_version[i], 2, 16, QChar('0')));
         }
     } else {
         // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
-        _gitHash = QString::fromUtf8((char*)custom_version, 8);
+        _gitHash = QString::fromUtf8((char*)flight_custom_version, 8);
     }
     if (_toolbox->corePlugin()->options()->checkFirmwareVersion()) {
         _firmwarePlugin->checkIfIsLatestStable(this);
@@ -2790,7 +2800,6 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     mavlink_rc_channels_t channels;
 
     mavlink_msg_rc_channels_decode(&message, &channels);
-
     uint16_t* _rgChannelvalues[cMaxRcChannels] = {
         &channels.chan1_raw,
         &channels.chan2_raw,

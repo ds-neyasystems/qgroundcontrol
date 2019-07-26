@@ -67,6 +67,7 @@ public slots:
     void slotParameterRequestList( uint8_t target_system, uint8_t target_component );
     void slotParameterRequestRead( uint8_t target_system, uint8_t target_component, QString paramName, int paramIndex );
     void slotParameterSet( uint8_t target_system, uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type );
+	void slotROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude );
     void slotSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust);
     void slotSetPositionTargetLocalNED( uint8_t target_system, uint8_t target_component, float position[3], float velocity[3], float acceleration[3], float yaw, float yaw_rate, uint16_t type_mask, uint8_t coordinate_frame);
 	void slotSystemTime(uint64_t time_unix_usec,uint32_t time_boot_ms);

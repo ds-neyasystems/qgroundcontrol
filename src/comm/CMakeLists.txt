@@ -13,7 +13,8 @@ set( ROS2_LIB_NAMES
   rclcpp
   rcl
   rcutils
-  std_msgs__rosidl_typesupport_cpp )
+  std_msgs__rosidl_typesupport_cpp
+  utc_msgs__rosidl_typesupport_cpp )
 
 string(REPLACE ":" "/include;" ROS2_INCLUDE_PATHS $ENV{CMAKE_PREFIX_PATH} )
 include_directories( ${ROS2_INCLUDE_PATHS} )

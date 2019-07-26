@@ -4,9 +4,12 @@
 #include "QGCMAVLink.h"
 #include "QGCTemporaryFile.h"
 
-//ROS Incldes
+//ROS Includes
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "utc_msgs/msg/global_pose_status_type.hpp"
+#include "utc_msgs/msg/global_waypoint_command_type.hpp"
+
 
 class CommManager;
 
@@ -21,6 +24,9 @@ public:
 	ROS2CommInterfaceConfiguration(const QString& name);
 
 	virtual ~ROS2CommInterfaceConfiguration();
+
+	
+	
 	virtual CommInterfaceType type();
     virtual void loadSettings(QSettings& settings, const QString& root);
 	virtual void saveSettings(QSettings& settings, const QString& root);
@@ -109,6 +115,7 @@ public slots:
     void slotParameterRequestList( uint8_t target_system, uint8_t target_component );
     void slotParameterRequestRead( uint8_t target_system, uint8_t target_component, QString paramName, int paramIndex );
     void slotParameterSet( uint8_t target_system, uint8_t target_component, QVariant parameter_value, QString parameter_id, FactMetaData::ValueType_t type );
+	void slotROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude );
     void slotSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust);
     void slotSetPositionTargetLocalNED( uint8_t target_system, uint8_t target_component, float position[3], float velocity[3], float acceleration[3], float yaw, float yaw_rate, uint16_t type_mask, uint8_t coordinate_frame);
 	void slotSystemTime(uint64_t time_unix_usec,uint32_t time_boot_ms);
@@ -116,10 +123,12 @@ public slots:
 protected:
 	void _initializePublishers();
 	void _initializeSubscribers();
-	Vehicle* _getVehicle();
+	Vehicle* _getVehicle(int system_id);
+	int _parseSubsystemID(const std::string& id);
+	int _parseComponentID(const std::string& id);
 
 	//Subscription handlers
-	void _handleHeartbeat(const std_msgs::msg::String::SharedPtr msg); //#PLACEHOLDER - change message type
+	void _handleGlobalPose(const utc_msgs::msg::GlobalPoseStatusType::SharedPtr msg);
 
 signals:	
 	void protocolStatusMessage(const QString& title, const QString& message);
@@ -132,10 +141,10 @@ protected:
 	ROS2Thread* _ros2Thread;
 	
 	//ROS Message Publishers
-	rclcpp::Publisher<std_msgs::msg::String>::SharedPtr _heartbeatPub; //#PLACEHOLDER - change message type
+	rclcpp::Publisher<utc_msgs::msg::GlobalWaypointCommandType>::SharedPtr _globalWaypointCommandPub;
 	
 	//ROS Message Subscribers
-	rclcpp::Subscription<std_msgs::msg::String>::SharedPtr _heartbeatSub; //#PLACEHOLDER - change message type
+	rclcpp::Subscription<utc_msgs::msg::GlobalPoseStatusType>::SharedPtr _globalPoseSub;
 
 };
 
