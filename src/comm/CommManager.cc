@@ -57,13 +57,11 @@ CommManager* CommManager::getCommManager()
 
 CommInterfaceConfiguration* CommManager::createConfiguration(int type, const QString& name)
 {
-	printf("CommManager::createConfiguration %i, \"%s\"\n", type, name.toStdString().c_str());
 	return CommInterfaceConfiguration::create(type, name);
 }
 
 CommInterfaceConfiguration* CommManager::createConfiguration(const QString& type, const QString& name)
 {
-	printf("CommManager::createConfiguration \"%s\", \"%s\"\n", type.toStdString().c_str(), name.toStdString().c_str());
 	return CommInterfaceConfiguration::create(type, name);
 }
 
@@ -233,12 +231,10 @@ void CommManager::loadCommConfigurationList()
 	QString name;
 	CommInterfaceConfiguration* new_config;
 
-printf("\n\nCommManager::loadCommConfigurationList()\n");
 	if( !settings.contains(CommInterfaceConfiguration::settingsRoot + "/count") )
 		return;
 	
 	count = settings.value(CommInterfaceConfiguration::settingsRoot + "/count").toInt();
-printf("CommManager::loadCommConfigurationList() - %i configurations\n", count);
 	for(int i = 0; i < count; i++)
 	{
 		QString root(CommInterfaceConfiguration::settingsRoot);
@@ -285,7 +281,7 @@ printf("CommManager::loadCommConfigurationList() - %i configurations\n", count);
 		new_config->setAutoConnect( settings.value(root + "/auto").toBool() );
 		new_config->setHighLatency( settings.value(root + "/high_latency").toBool() );
 		new_config->loadSettings(settings, root);
-printf("\t===\nCommManager new config: \"%s\" - %i\n", new_config->name().toStdString().c_str(), new_config->isAutoConnect());
+
 		//Add new configuration
 		addConfiguration(new_config);
 
@@ -475,7 +471,6 @@ CommInterfaceConfiguration::SharedPointer CommManager::addConfiguration(CommInte
 
 void CommManager::startAutoConnectedLinks()
 {
-	printf("CommManager::startAutoConnectedLinks() - %i configurations\n", _sharedConfigurationList.count());
 	CommInterfaceConfiguration::SharedPointer conf;
 	for(int i = 0; i < _sharedConfigurationList.count(); i++)
 	{
@@ -579,7 +574,6 @@ void CommManager::_addInterface(CommInterface* interface)
 
 QmlObjectListModel* CommManager::_qmlLinkConfigurations()
 {
-	printf("CommManager::_qmlLinkConfigurations %i\n", _qmlConfigurations.count());
 	return &_qmlConfigurations;
 }
 

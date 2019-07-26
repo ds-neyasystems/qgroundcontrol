@@ -23,9 +23,7 @@ class ROS2CommInterfaceConfiguration :public CommInterfaceConfiguration
 public:
 	ROS2CommInterfaceConfiguration(const QString& name);
 
-	virtual ~ROS2CommInterfaceConfiguration();
-
-	
+	virtual ~ROS2CommInterfaceConfiguration();	
 	
 	virtual CommInterfaceType type();
     virtual void loadSettings(QSettings& settings, const QString& root);
@@ -53,6 +51,22 @@ protected:
 	std::shared_ptr<rclcpp::executors::SingleThreadedExecutor> _executor;
 
 	void run() override;
+};
+
+/* ***** *
+ * IDMap *
+ * ***** */
+template< class K, class V >
+class IDMap
+{
+public:
+	bool find( const K& key, V& value );
+	bool find( const V& key, K& value );
+	void insert( const K& key, const V& value );
+
+protected:
+	std::map<K,V> _kvMap;
+	std::map<V,K> _vkMap;
 };
 
 /* ******************** *
@@ -124,7 +138,7 @@ protected:
 	void _initializePublishers();
 	void _initializeSubscribers();
 	Vehicle* _getVehicle(int system_id);
-	int _parseSubsystemID(const std::string& id);
+	int _parseSystemID(const std::string& id);
 	int _parseComponentID(const std::string& id);
 
 	//Subscription handlers
@@ -139,6 +153,8 @@ protected:
 	
 	std::shared_ptr<rclcpp::Node> _node;
 	ROS2Thread* _ros2Thread;
+
+	IDMap<std::string, int> _vehicleIDMap;
 	
 	//ROS Message Publishers
 	rclcpp::Publisher<utc_msgs::msg::GlobalWaypointCommandType>::SharedPtr _globalWaypointCommandPub;
@@ -148,3 +164,36 @@ protected:
 
 };
 
+/* ************************** *
+ * IDMap Function Definitions *
+ * ************************** */
+template< class K, class V >
+bool IDMap<K,V>::find( const K& key, V& value )
+{
+	typename std::map<K,V>::iterator i = _kvMap.find(key);
+	if(i != _kvMap.end())
+	{
+		value = i->second;
+		return true;
+	}
+	return false;
+}
+
+template< class K, class V >
+bool IDMap<K,V>::find( const V& key, K& value )
+{
+	typename std::map<V,K>::iterator i = _vkMap.find(key);
+	if(i != _vkMap.end())
+	{
+		value = i->second;
+		return true;
+	}
+	return false;
+}
+
+template< class K, class V >
+void IDMap<K,V>::insert( const K& key, const V& value )
+{
+	_kvMap.insert( std::pair<K,V>(key, value) );
+	_vkMap.insert( std::pair<V,K>(value, key) );
+}

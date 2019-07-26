@@ -79,6 +79,7 @@ ROS2CommInterface::ROS2CommInterface( CommInterfaceConfiguration::SharedPointer 
 	CommInterface(config, isPX4Flow),
 	_gpsIntAvailable(false),
 	_ros2Thread(),
+	_vehicleIDMap(),
 	_globalWaypointCommandPub(nullptr),
 	_globalPoseSub(nullptr)
 {
@@ -295,19 +296,32 @@ void ROS2CommInterface::slotParameterSet( uint8_t target_system, uint8_t target_
 
 void ROS2CommInterface::slotROS2GlobalWaypointCommand( int target_system, int target_component, double latitude, double longitude, double altitude )
 {
-	utc_msgs::msg::GlobalWaypointCommandType msg;
+	utc_msgs::msg::GlobalWaypointCommandType msg, upload_msg, start_msg;
+	std::string target_system_id;
 
 	msg.position.geodetic_latitude.latitude = latitude;
 	msg.position.geodetic_longitude.longitude = longitude;
+	msg.depth = 1.0;
+
+	if( !_vehicleIDMap.find( target_system, target_system_id ) )
+		return;
 
 	//#TODO figure out source id and session id
 	msg.session_id = "??";
 	msg.source_subsystem_id = "QGroundControl Component";
 	msg.source_system_id  = "QGroundControl";
-	msg.target_subsystem_id = std::to_string(target_component);
-	msg.target_system_id = std::to_string(target_system);
-
+	msg.target_system_id = target_system_id;
 	_globalWaypointCommandPub->publish(msg);
+
+	//#HACK upload mission
+	upload_msg.target_subsystem_id = "1";
+	upload_msg.target_system_id = target_system_id;
+	_globalWaypointCommandPub->publish(upload_msg);
+
+	//#HACK run mission
+	start_msg.source_subsystem_id = "1";
+	start_msg.target_system_id = target_system_id;
+	_globalWaypointCommandPub->publish(start_msg);
 }
 
 void ROS2CommInterface::slotSetAttitudeTarget(uint8_t target_system,uint8_t target_component,uint8_t type_mask,const float attitude_quaternion[4],float body_roll_rate,float body_pitch_rate,float body_yaw_rate,float thrust)
@@ -324,7 +338,7 @@ void ROS2CommInterface::slotSystemTime(uint64_t time_unix_usec,uint32_t time_boo
 
 void ROS2CommInterface::_initializePublishers()
 {
-	_globalWaypointCommandPub = _node->create_publisher<utc_msgs::msg::GlobalWaypointCommandType>("global_pose_global_waypoint"); //#TODO: get topic
+	_globalWaypointCommandPub = _node->create_publisher<utc_msgs::msg::GlobalWaypointCommandType>("global_waypoint_item"); //#TODO: get topic
 }
 
 void ROS2CommInterface::_initializeSubscribers()
@@ -343,10 +357,21 @@ Vehicle* ROS2CommInterface::_getVehicle(int system_id)
 	return vehicle_manager->getVehicleById(system_id);
 }
 
-int ROS2CommInterface::_parseSubsystemID(const std::string& id)
+int ROS2CommInterface::_parseSystemID(const std::string& id)
 {
-	//#PLACEHOLDER
-	return 257;
+	static int new_id_start = std::numeric_limits<unsigned short>::max() + 1;
+	int vehicle_id;
+
+	//If the id is already in the map, use it
+	if( _vehicleIDMap.find(id, vehicle_id) )
+		return vehicle_id;
+
+	//If the id is not already in the map, use the next available number and add it to the map
+	vehicle_id = new_id_start;
+	_vehicleIDMap.insert( id, vehicle_id );
+	new_id_start++;
+
+	return vehicle_id;
 }
 
 int ROS2CommInterface::_parseComponentID(const std::string& id)
@@ -363,7 +388,7 @@ void ROS2CommInterface::_handleGlobalPose(const utc_msgs::msg::GlobalPoseStatusT
 	double latitude, longitude, altitude, yaw;
 
 	//Get id of vehicle
-	system_id = _parseSubsystemID(msg->source_system_id);
+	system_id = _parseSystemID(msg->source_system_id);
 	component_id = _parseComponentID(msg->source_subsystem_id);
 
 	//Get vehicle from id
